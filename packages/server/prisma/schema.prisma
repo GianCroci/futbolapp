@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Position {
+  ARQUERO
+  DEFENSOR_CENTRAL
+  LATERAL_DERECHO
+  LATERAL_IZQUIERDO
+  MEDIOCENTRO_DEFENSIVO
+  MEDIOCENTRO_OFENSIVO
+  EXTREMO_DERECHO
+  EXTREMO_IZQUIERDO
+  ENGANCHE
+  DELANTERO_CENTRO
+  DELANTERO_PUNTA
+}
+
+enum FormationType {
+  F_4_4_2
+  F_4_3_3
+  F_3_5_2
+  F_4_2_3_1
+  F_5_3_2
+  F_4_1_4_1
+  F_3_4_3
+}
+
+enum MatchEventType {
+  GOAL
+  ASSIST
+  YELLOW_CARD
+  RED_CARD
+  SUB_IN
+  SUB_OUT
+}
+
+model User {
+  id        String   @id @default(uuid())
+  auth0Id   String   @unique
+  email     String   @unique
+  name      String?
+  picture   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  teams     Team[]
+}
+
+model Team {
+  id         String      @id @default(uuid())
+  name       String
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  players    Player[]
+  formations Formation[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model Player {
+  id          String        @id @default(uuid())
+  name        String
+  position    Position
+  dorsal      Int?
+  teamId      String
+  team        Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  formations  FormationPlayer[]
+  matchEvents MatchEvent[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([teamId, dorsal])
+  @@index([teamId])
+}
+
+model Formation {
+  id            String             @id @default(uuid())
+  name          String
+  date          DateTime           @default(now())
+  formationType FormationType?
+  matchDate     DateTime?
+  scoreHome     Int?
+  scoreAway     Int?
+  opponent      String?
+  teamId        String
+  team          Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  players       FormationPlayer[]
+  events        MatchEvent[]
+
+  @@index([teamId])
+}
+
+model FormationPlayer {
+  id            String    @id @default(uuid())
+  formationId   String
+  formation     Formation @relation(fields: [formationId], references: [id], onDelete: Cascade)
+  playerId      String
+  player        Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  positionX     Float
+  positionY     Float
+  slotPosition  String
+  isSubstitute  Boolean   @default(false)
+  subInMinute   Int?
+  subOutMinute  Int?
+
+  @@unique([formationId, playerId])
+  @@index([formationId])
+}
+
+model MatchEvent {
+  id          String          @id @default(uuid())
+  formationId String
+  formation   Formation       @relation(fields: [formationId], references: [id], onDelete: Cascade)
+  playerId    String
+  player      Player          @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  eventType   MatchEventType
+  minute      Int?
+  createdAt   DateTime        @default(now())
+
+  @@index([formationId])
+  @@index([playerId])
+}

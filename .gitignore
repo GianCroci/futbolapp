@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.log
+prisma/migrations/
+.DS_Store
+# Local AI runtime state
+.atl/
