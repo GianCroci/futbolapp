@@ -5,6 +5,7 @@ import { ConfirmDialog } from '../common/ConfirmDialog';
 
 interface EventListProps {
   events: MatchEvent[];
+  teamId: string;
   formationId: string;
   playerNames: Record<string, string>;
 }
@@ -18,7 +19,7 @@ const EVENT_CONFIG: Record<MatchEventType, { label: string; icon: string; color:
   SUB_OUT: { label: 'Salida', icon: '🔴', color: 'text-rose-700 bg-rose-50' },
 };
 
-export function EventList({ events, formationId, playerNames }: EventListProps) {
+export function EventList({ events, teamId, formationId, playerNames }: EventListProps) {
   const { deleteEvent } = useMatchEventStore();
   const [deletingEvent, setDeletingEvent] = useState<MatchEvent | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -33,7 +34,7 @@ export function EventList({ events, formationId, playerNames }: EventListProps) 
     if (!deletingEvent) return;
     setIsDeleting(true);
     try {
-      await deleteEvent(formationId, deletingEvent.id);
+      await deleteEvent(teamId, formationId, deletingEvent.id);
       setDeletingEvent(null);
     } finally {
       setIsDeleting(false);

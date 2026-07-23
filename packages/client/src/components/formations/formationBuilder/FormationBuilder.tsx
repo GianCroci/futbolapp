@@ -372,7 +372,7 @@ export function FormationBuilderPage() {
         playerId: player.id,
         playerName: player.name,
         playerDorsal: player.dorsal,
-        subInMinute: 45,
+        subInMinute: 0,
       },
     ]);
   }, []);

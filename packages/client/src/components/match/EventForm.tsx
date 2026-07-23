@@ -6,6 +6,7 @@ import { MatchEventType, FormationPlayer } from '../../types';
 interface EventFormProps {
   isOpen: boolean;
   onClose: () => void;
+  teamId: string;
   formationId: string;
   players: FormationPlayer[];
 }
@@ -19,7 +20,7 @@ const EVENT_TYPES: { value: MatchEventType; label: string }[] = [
   { value: 'SUB_OUT', label: 'Salida' },
 ];
 
-export function EventForm({ isOpen, onClose, formationId, players }: EventFormProps) {
+export function EventForm({ isOpen, onClose, teamId, formationId, players }: EventFormProps) {
   const { createEvent } = useMatchEventStore();
   const [playerId, setPlayerId] = useState('');
   const [eventType, setEventType] = useState<MatchEventType>('GOAL');
@@ -38,7 +39,7 @@ export function EventForm({ isOpen, onClose, formationId, players }: EventFormPr
     setError(null);
 
     try {
-      await createEvent(formationId, {
+      await createEvent(teamId, formationId, {
         playerId,
         eventType,
         minute: minute ? parseInt(minute, 10) : undefined,

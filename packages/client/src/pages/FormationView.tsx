@@ -14,6 +14,11 @@ export function FormationViewPage() {
   const { currentFormation, isLoading, fetchFormation } = useFormationStore();
   const { events, fetchEvents } = useMatchEventStore();
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
+  const [isEditingMetadata, setIsEditingMetadata] = useState(false);
+  const [editOpponent, setEditOpponent] = useState('');
+  const [editScoreHome, setEditScoreHome] = useState('');
+  const [editScoreAway, setEditScoreAway] = useState('');
+  const [editMatchDate, setEditMatchDate] = useState('');
 
   const [slots, setSlots] = useState<SlotAssignment[]>([]);
 
@@ -22,8 +27,8 @@ export function FormationViewPage() {
   }, [teamId, formationId, fetchFormation]);
 
   useEffect(() => {
-    if (formationId) fetchEvents(formationId);
-  }, [formationId, fetchEvents]);
+    if (teamId && formationId) fetchEvents(teamId, formationId);
+  }, [teamId, formationId, fetchEvents]);
 
   useEffect(() => {
     if (currentFormation) {
@@ -69,6 +74,36 @@ export function FormationViewPage() {
       F_3_4_3: '3-4-3',
     };
     return labels[ft] || ft;
+  };
+
+  const startEditingMetadata = () => {
+    setEditOpponent(currentFormation?.opponent ?? '');
+    setEditScoreHome(currentFormation?.scoreHome?.toString() ?? '');
+    setEditScoreAway(currentFormation?.scoreAway?.toString() ?? '');
+    setEditMatchDate(currentFormation?.matchDate ? new Date(currentFormation.matchDate).toISOString().split('T')[0] : '');
+    setIsEditingMetadata(true);
+  };
+
+  const saveMetadata = async () => {
+    if (!teamId || !formationId) return;
+    try {
+      const response = await fetch(`/api/teams/${teamId}/formations/${formationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          opponent: editOpponent || null,
+          scoreHome: editScoreHome ? parseInt(editScoreHome, 10) : null,
+          scoreAway: editScoreAway ? parseInt(editScoreAway, 10) : null,
+          matchDate: editMatchDate || null,
+        }),
+      });
+      if (response.ok) {
+        fetchFormation(teamId, formationId);
+        setIsEditingMetadata(false);
+      }
+    } catch (err) {
+      console.error('Error updating metadata:', err);
+    }
   };
 
   if (isLoading) {
@@ -127,20 +162,73 @@ export function FormationViewPage() {
                 })}
               </span>
             </div>
-            {/* Match metadata */}
-            {currentFormation.opponent && (
+            {/* Match metadata - editable */}
+            {isEditingMetadata ? (
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <input
+                  type="text"
+                  value={editOpponent}
+                  onChange={(e) => setEditOpponent(e.target.value)}
+                  placeholder="Rival"
+                  className="w-32 border border-gray-300 rounded px-2 py-1 text-sm"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  value={editScoreHome}
+                  onChange={(e) => setEditScoreHome(e.target.value)}
+                  placeholder="Goles local"
+                  className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
+                />
+                <span>-</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={editScoreAway}
+                  onChange={(e) => setEditScoreAway(e.target.value)}
+                  placeholder="Goles rival"
+                  className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
+                />
+                <input
+                  type="date"
+                  value={editMatchDate}
+                  onChange={(e) => setEditMatchDate(e.target.value)}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                />
+                <button
+                  onClick={saveMetadata}
+                  className="px-2 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                >
+                  Guardar
+                </button>
+                <button
+                  onClick={() => setIsEditingMetadata(false)}
+                  className="px-2 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                >
+                  Cancelar
+                </button>
+              </div>
+            ) : (
               <div className="flex items-center gap-3 mt-2">
                 {currentFormation.scoreHome != null && currentFormation.scoreAway != null && (
                   <span className="text-lg font-bold text-gray-800">
                     {currentFormation.scoreHome} - {currentFormation.scoreAway}
                   </span>
                 )}
-                <span className="text-sm text-gray-600">vs {currentFormation.opponent}</span>
+                {currentFormation.opponent && (
+                  <span className="text-sm text-gray-600">vs {currentFormation.opponent}</span>
+                )}
                 {currentFormation.matchDate && (
                   <span className="text-xs text-gray-400">
                     {new Date(currentFormation.matchDate).toLocaleDateString('es-AR')}
                   </span>
                 )}
+                <button
+                  onClick={startEditingMetadata}
+                  className="px-2 py-1 text-xs text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
+                >
+                  Editar datos del partido
+                </button>
               </div>
             )}
           </div>
@@ -233,6 +321,7 @@ export function FormationViewPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <EventList
             events={events}
+            teamId={teamId!}
             formationId={formationId!}
             playerNames={playerNames}
           />
@@ -242,6 +331,7 @@ export function FormationViewPage() {
       <EventForm
         isOpen={isEventFormOpen}
         onClose={() => setIsEventFormOpen(false)}
+        teamId={teamId!}
         formationId={formationId!}
         players={currentFormation.players}
       />
