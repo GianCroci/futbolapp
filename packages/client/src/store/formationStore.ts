@@ -21,12 +21,20 @@ interface FormationState {
   createFormation: (teamId: string, data: {
     name: string;
     formationType?: string | null;
-    players: { playerId: string; positionX: number; positionY: number; slotPosition: string }[];
+    matchDate?: string | null;
+    scoreHome?: number | null;
+    scoreAway?: number | null;
+    opponent?: string | null;
+    players: { playerId: string; positionX: number; positionY: number; slotPosition: string; isSubstitute?: boolean; subInMinute?: number | null; subOutMinute?: number | null }[];
   }) => Promise<void>;
   updateFormation: (teamId: string, formationId: string, data: {
     name: string;
     formationType?: string | null;
-    players: { playerId: string; positionX: number; positionY: number; slotPosition: string }[];
+    matchDate?: string | null;
+    scoreHome?: number | null;
+    scoreAway?: number | null;
+    opponent?: string | null;
+    players: { playerId: string; positionX: number; positionY: number; slotPosition: string; isSubstitute?: boolean; subInMinute?: number | null; subOutMinute?: number | null }[];
   }) => Promise<void>;
   deleteFormation: (teamId: string, formationId: string) => Promise<void>;
   clearError: () => void;
