@@ -6,6 +6,7 @@ import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { FormationToolbar } from './FormationToolbar';
 import { FootballPitch } from './FootballPitch';
 import { Roster } from './Roster';
+import { SubstitutesPanel, SubstituteEntry } from './SubstitutesPanel';
 import { useFormationStore, SlotAssignment } from '../../../store/formationStore';
 import { usePlayerStore } from '../../../store/playerStore';
 import { Player } from '../../../types';
@@ -36,8 +37,9 @@ export function FormationBuilderPage() {
   const [scoreHome, setScoreHome] = useState('');
   const [scoreAway, setScoreAway] = useState('');
 
-  // Substitute tracking: slotPosition -> { isSubstitute, subInMinute }
-  const [subData, setSubData] = useState<Record<string, { isSubstitute: boolean; subInMinute: number | null }>>({});
+  // Substitute state (separate from pitch slots)
+  const [substitutes, setSubstitutes] = useState<SubstituteEntry[]>([]);
+  const [subSearchQuery, setSubSearchQuery] = useState('');
 
   const isEditing = !!formationId;
 
@@ -91,17 +93,20 @@ export function FormationBuilderPage() {
       });
       setSlots(savedSlots);
 
-      // Load substitute data
-      const newSubData: Record<string, { isSubstitute: boolean; subInMinute: number | null }> = {};
+      // Load substitute data from saved formation
+      const savedSubs: SubstituteEntry[] = [];
       for (const fp of currentFormation.players) {
         if (fp.isSubstitute) {
-          newSubData[fp.slotPosition] = {
-            isSubstitute: true,
-            subInMinute: fp.subInMinute ?? null,
-          };
+          const player = fp.player as { name: string; dorsal: number | null } | undefined;
+          savedSubs.push({
+            playerId: fp.playerId,
+            playerName: player?.name || 'Unknown',
+            playerDorsal: player?.dorsal ?? null,
+            subInMinute: fp.subInMinute ?? 45,
+          });
         }
       }
-      setSubData(newSubData);
+      setSubstitutes(savedSubs);
     } else if (!isEditing) {
       // Fresh builder: empty slots for 4-4-2
       const positions = getPresetPositions(null);
@@ -269,23 +274,47 @@ export function FormationBuilderPage() {
     setIsSaving(true);
     setError(null);
 
-    const playersData = slots
+    // Starters from pitch slots
+    const startersData = slots
       .filter((s) => s.playerId)
-      .map((s) => {
-        const sub = subData[s.slotPosition];
-        return {
-          playerId: s.playerId!,
-          positionX: s.positionX,
-          positionY: s.positionY,
-          slotPosition: s.slotPosition,
-          isSubstitute: sub?.isSubstitute ?? false,
-          subInMinute: sub?.subInMinute ?? null,
-        };
-      });
+      .map((s) => ({
+        playerId: s.playerId!,
+        positionX: s.positionX,
+        positionY: s.positionY,
+        slotPosition: s.slotPosition,
+        isSubstitute: false,
+        subInMinute: null,
+      }));
 
-    // Validate 17-23 player limit
+    // Substitutes from substitutes panel
+    const subsData = substitutes.map((sub, idx) => ({
+      playerId: sub.playerId,
+      positionX: 0,
+      positionY: 0,
+      slotPosition: `sub-${idx}`,
+      isSubstitute: true,
+      subInMinute: sub.subInMinute,
+    }));
+
+    const playersData = [...startersData, ...subsData];
+
+    // Validate starter count (must be exactly 11)
+    if (startersData.length !== 11) {
+      setError(`Se necesitan exactamente 11 titulares (actuales: ${startersData.length})`);
+      setIsSaving(false);
+      return;
+    }
+
+    // Validate substitute count (6-12)
+    if (substitutes.length < 6 || substitutes.length > 12) {
+      setError(`Se necesitan entre 6 y 12 suplentes (actuales: ${substitutes.length})`);
+      setIsSaving(false);
+      return;
+    }
+
+    // Validate total (17-23)
     if (playersData.length < 17 || playersData.length > 23) {
-      setError(`Se necesitan entre 17 y 23 jugadores (actuales: ${playersData.length})`);
+      setError(`Total de jugadores debe ser entre 17 y 23 (actuales: ${playersData.length})`);
       setIsSaving(false);
       return;
     }
@@ -297,15 +326,6 @@ export function FormationBuilderPage() {
       setError('Si cargás un resultado, ambos marcadores deben estar completos');
       setIsSaving(false);
       return;
-    }
-
-    // Validate substitutes with subInMinute
-    for (const sub of playersData) {
-      if (sub.isSubstitute && sub.subInMinute == null) {
-        setError('Los suplentes deben tener un minuto de ingreso');
-        setIsSaving(false);
-        return;
-      }
     }
 
     const payload = {
@@ -336,36 +356,37 @@ export function FormationBuilderPage() {
     }
   };
 
-  const assignedPlayerIds = new Set(
-    slots.filter((s) => s.playerId).map((s) => s.playerId!)
-  );
-  const starterCount = slots.filter((s) => s.playerId && !subData[s.slotPosition]?.isSubstitute).length;
-  const subCount = slots.filter((s) => s.playerId && subData[s.slotPosition]?.isSubstitute).length;
+  const assignedPlayerIds = new Set([
+    ...slots.filter((s) => s.playerId).map((s) => s.playerId!),
+    ...substitutes.map((s) => s.playerId),
+  ]);
+  const starterCount = slots.filter((s) => s.playerId).length;
+  const subCount = substitutes.length;
   const playerCount = assignedPlayerIds.size;
 
-  // Toggle substitute status for a slot
-  const toggleSubstitute = useCallback((slotPosition: string) => {
-    setSubData((prev) => {
-      const current = prev[slotPosition];
-      if (current?.isSubstitute) {
-        // Remove substitute status
-        const next = { ...prev };
-        delete next[slotPosition];
-        return next;
-      }
-      return {
-        ...prev,
-        [slotPosition]: { isSubstitute: true, subInMinute: 45 },
-      };
-    });
+  // Add a substitute
+  const handleAddSubstitute = useCallback((player: Player) => {
+    setSubstitutes((prev) => [
+      ...prev,
+      {
+        playerId: player.id,
+        playerName: player.name,
+        playerDorsal: player.dorsal,
+        subInMinute: 45,
+      },
+    ]);
   }, []);
 
-  // Update subInMinute for a substitute
-  const updateSubInMinute = useCallback((slotPosition: string, minute: number | null) => {
-    setSubData((prev) => ({
-      ...prev,
-      [slotPosition]: { ...prev[slotPosition], subInMinute: minute },
-    }));
+  // Remove a substitute
+  const handleRemoveSubstitute = useCallback((playerId: string) => {
+    setSubstitutes((prev) => prev.filter((s) => s.playerId !== playerId));
+  }, []);
+
+  // Update substitute minute
+  const handleUpdateSubMinute = useCallback((playerId: string, minute: number) => {
+    setSubstitutes((prev) =>
+      prev.map((s) => (s.playerId === playerId ? { ...s, subInMinute: minute } : s))
+    );
   }, []);
 
   // Handle right-click / double-click to remove from slot
@@ -529,16 +550,15 @@ export function FormationBuilderPage() {
         {/* Roster sidebar */}
         <div className="w-full md:w-72 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col max-h-[600px]">
           <div className="p-3 border-b border-gray-200 bg-gray-50 rounded-t-xl">
-            <h3 className="text-sm font-semibold text-gray-700">Jugadores disponibles</h3>
+            <h3 className="text-sm font-semibold text-gray-700">Titulares</h3>
             <p className="text-xs text-gray-400 mt-0.5">
-              {playerCount} en cancha · {players.length - playerCount} disponibles
+              {starterCount}/11 en cancha · {players.length - playerCount} disponibles
             </p>
           </div>
 
           {/* Right-click context: selected slot */}
           {selectedSlot && (() => {
             const slot = slots.find((s) => s.slotPosition === selectedSlot);
-            const sub = subData[selectedSlot];
             return slot?.playerId ? (
               <div className="px-3 py-2 bg-yellow-50 border-b border-yellow-200">
                 <p className="text-xs text-yellow-700">
@@ -546,40 +566,12 @@ export function FormationBuilderPage() {
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <button
-                    onClick={() => toggleSubstitute(selectedSlot)}
-                    className={`text-xs px-2 py-0.5 rounded transition-colors ${
-                      sub?.isSubstitute
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {sub?.isSubstitute ? 'Suplente ✓' : 'Marcar como suplente'}
-                  </button>
-                  <button
                     onClick={() => handleRemoveFromSlot(selectedSlot)}
                     className="text-xs text-red-600 hover:text-red-800 underline"
                   >
-                    Quitar
+                    Quitar de la cancha
                   </button>
                 </div>
-                {sub?.isSubstitute && (
-                  <div className="mt-1.5">
-                    <label className="text-xs text-blue-600">Min. ingreso:</label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={120}
-                      value={sub.subInMinute ?? ''}
-                      onChange={(e) =>
-                        updateSubInMinute(
-                          selectedSlot,
-                          e.target.value ? parseInt(e.target.value, 10) : null
-                        )
-                      }
-                      className="w-16 ml-1 border border-blue-300 rounded px-1 py-0.5 text-xs"
-                    />
-                  </div>
-                )}
               </div>
             ) : (
               <div className="px-3 py-2 bg-green-50 border-b border-green-200">
@@ -602,6 +594,18 @@ export function FormationBuilderPage() {
           />
         </div>
       </div>
+
+      {/* Substitutes panel */}
+      <SubstitutesPanel
+        substitutes={substitutes}
+        assignedPlayerIds={assignedPlayerIds}
+        allPlayers={players}
+        searchQuery={subSearchQuery}
+        onSearchChange={setSubSearchQuery}
+        onAddSubstitute={handleAddSubstitute}
+        onRemoveSubstitute={handleRemoveSubstitute}
+        onUpdateMinute={handleUpdateSubMinute}
+      />
     </AppLayout>
   );
 }
