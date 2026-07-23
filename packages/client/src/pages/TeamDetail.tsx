@@ -11,7 +11,7 @@ import { PlayerForm, PLAYER_POSITIONS } from '../components/players/PlayerForm';
 import { PlayerFilter } from '../components/players/PlayerFilter';
 import { Player } from '../types';
 
-type Tab = 'players' | 'formations';
+type Tab = 'players' | 'formations' | 'stats';
 
 export function TeamDetailPage() {
   const { teamId } = useParams<{ teamId: string }>();
@@ -179,6 +179,16 @@ export function TeamDetailPage() {
           >
             📋 Formaciones
           </button>
+          <button
+            onClick={() => setActiveTab('stats')}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'stats'
+                ? 'border-green-600 text-green-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            📊 Estadísticas
+          </button>
         </div>
       </div>
 
@@ -237,6 +247,23 @@ export function TeamDetailPage() {
             className="bg-green-600 text-white px-6 py-2.5 rounded-lg hover:bg-green-700 transition-colors font-medium"
           >
             Ir a formaciones
+          </button>
+        </div>
+      )}
+
+      {/* Stats Tab */}
+      {activeTab === 'stats' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+          <div className="text-6xl mb-4">📊</div>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">Estadísticas del equipo</h3>
+          <p className="text-gray-500 mb-6">
+            Visualizá las estadísticas de tus jugadores: goles, asistencias, tarjetas y minutos jugados.
+          </p>
+          <button
+            onClick={() => navigate(`/teams/${teamId}/stats`)}
+            className="bg-green-600 text-white px-6 py-2.5 rounded-lg hover:bg-green-700 transition-colors font-medium"
+          >
+            Ver estadísticas
           </button>
         </div>
       )}

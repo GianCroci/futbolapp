@@ -1,20 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { useFormationStore, SlotAssignment } from '../store/formationStore';
+import { useMatchEventStore } from '../store/matchEventStore';
 import { getPresetPositions } from '../utils/formationPresets';
+import { EventForm } from '../components/match/EventForm';
+import { EventList } from '../components/match/EventList';
 
 export function FormationViewPage() {
   const { teamId, formationId } = useParams<{ teamId: string; formationId: string }>();
   const navigate = useNavigate();
   const { currentFormation, isLoading, fetchFormation } = useFormationStore();
+  const { events, fetchEvents } = useMatchEventStore();
+  const [isEventFormOpen, setIsEventFormOpen] = useState(false);
 
   const [slots, setSlots] = useState<SlotAssignment[]>([]);
 
   useEffect(() => {
     if (teamId && formationId) fetchFormation(teamId, formationId);
   }, [teamId, formationId, fetchFormation]);
+
+  useEffect(() => {
+    if (formationId) fetchEvents(formationId);
+  }, [formationId, fetchEvents]);
 
   useEffect(() => {
     if (currentFormation) {
@@ -35,6 +44,17 @@ export function FormationViewPage() {
       });
       setSlots(viewSlots);
     }
+  }, [currentFormation]);
+
+  const playerNames = useMemo(() => {
+    if (!currentFormation) return {};
+    const map: Record<string, string> = {};
+    for (const fp of currentFormation.players) {
+      if (fp.player) {
+        map[fp.playerId] = fp.player.name;
+      }
+    }
+    return map;
   }, [currentFormation]);
 
   const getFormationLabel = (ft: string | null): string => {
@@ -107,6 +127,22 @@ export function FormationViewPage() {
                 })}
               </span>
             </div>
+            {/* Match metadata */}
+            {currentFormation.opponent && (
+              <div className="flex items-center gap-3 mt-2">
+                {currentFormation.scoreHome != null && currentFormation.scoreAway != null && (
+                  <span className="text-lg font-bold text-gray-800">
+                    {currentFormation.scoreHome} - {currentFormation.scoreAway}
+                  </span>
+                )}
+                <span className="text-sm text-gray-600">vs {currentFormation.opponent}</span>
+                {currentFormation.matchDate && (
+                  <span className="text-xs text-gray-400">
+                    {new Date(currentFormation.matchDate).toLocaleDateString('es-AR')}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <button
             onClick={() => navigate(`/teams/${teamId}/formations/edit/${formationId}`)}
@@ -179,6 +215,36 @@ export function FormationViewPage() {
             ))}
         </div>
       </div>
+
+      {/* Match Events */}
+      <div className="mt-8 max-w-2xl mx-auto">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-700">Eventos del partido</h3>
+          <button
+            onClick={() => setIsEventFormOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Agregar evento
+          </button>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <EventList
+            events={events}
+            formationId={formationId!}
+            playerNames={playerNames}
+          />
+        </div>
+      </div>
+
+      <EventForm
+        isOpen={isEventFormOpen}
+        onClose={() => setIsEventFormOpen(false)}
+        formationId={formationId!}
+        players={currentFormation.players}
+      />
     </AppLayout>
   );
 }

@@ -30,6 +30,15 @@ export function FormationBuilderPage() {
   const [activeDragPlayer, setActiveDragPlayer] = useState<Player | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Match metadata state
+  const [matchDate, setMatchDate] = useState('');
+  const [opponent, setOpponent] = useState('');
+  const [scoreHome, setScoreHome] = useState('');
+  const [scoreAway, setScoreAway] = useState('');
+
+  // Substitute tracking: slotPosition -> { isSubstitute, subInMinute }
+  const [subData, setSubData] = useState<Record<string, { isSubstitute: boolean; subInMinute: number | null }>>({});
+
   const isEditing = !!formationId;
 
   const sensors = useSensors(
@@ -59,6 +68,12 @@ export function FormationBuilderPage() {
       const ft = currentFormation.formationType;
       setFormationType(ft || null);
 
+      // Load match metadata
+      setMatchDate(currentFormation.matchDate ? currentFormation.matchDate.slice(0, 10) : '');
+      setOpponent(currentFormation.opponent || '');
+      setScoreHome(currentFormation.scoreHome != null ? String(currentFormation.scoreHome) : '');
+      setScoreAway(currentFormation.scoreAway != null ? String(currentFormation.scoreAway) : '');
+
       // Build slots from saved formation players
       const pos = ft ? getPresetPositions(ft) : getPresetPositions(null);
       const savedSlots: SlotAssignment[] = pos.map((p) => {
@@ -75,6 +90,18 @@ export function FormationBuilderPage() {
         };
       });
       setSlots(savedSlots);
+
+      // Load substitute data
+      const newSubData: Record<string, { isSubstitute: boolean; subInMinute: number | null }> = {};
+      for (const fp of currentFormation.players) {
+        if (fp.isSubstitute) {
+          newSubData[fp.slotPosition] = {
+            isSubstitute: true,
+            subInMinute: fp.subInMinute ?? null,
+          };
+        }
+      }
+      setSubData(newSubData);
     } else if (!isEditing) {
       // Fresh builder: empty slots for 4-4-2
       const positions = getPresetPositions(null);
@@ -244,26 +271,58 @@ export function FormationBuilderPage() {
 
     const playersData = slots
       .filter((s) => s.playerId)
-      .map((s) => ({
-        playerId: s.playerId!,
-        positionX: s.positionX,
-        positionY: s.positionY,
-        slotPosition: s.slotPosition,
-      }));
+      .map((s) => {
+        const sub = subData[s.slotPosition];
+        return {
+          playerId: s.playerId!,
+          positionX: s.positionX,
+          positionY: s.positionY,
+          slotPosition: s.slotPosition,
+          isSubstitute: sub?.isSubstitute ?? false,
+          subInMinute: sub?.subInMinute ?? null,
+        };
+      });
+
+    // Validate 17-23 player limit
+    if (playersData.length < 17 || playersData.length > 23) {
+      setError(`Se necesitan entre 17 y 23 jugadores (actuales: ${playersData.length})`);
+      setIsSaving(false);
+      return;
+    }
+
+    // Validate score parity
+    const hasHome = scoreHome.trim() !== '';
+    const hasAway = scoreAway.trim() !== '';
+    if (hasHome !== hasAway) {
+      setError('Si cargás un resultado, ambos marcadores deben estar completos');
+      setIsSaving(false);
+      return;
+    }
+
+    // Validate substitutes with subInMinute
+    for (const sub of playersData) {
+      if (sub.isSubstitute && sub.subInMinute == null) {
+        setError('Los suplentes deben tener un minuto de ingreso');
+        setIsSaving(false);
+        return;
+      }
+    }
+
+    const payload = {
+      name: name.trim(),
+      formationType,
+      matchDate: matchDate || null,
+      opponent: opponent || null,
+      scoreHome: hasHome ? parseInt(scoreHome, 10) : null,
+      scoreAway: hasAway ? parseInt(scoreAway, 10) : null,
+      players: playersData,
+    };
 
     try {
       if (isEditing && formationId) {
-        await updateFormation(teamId, formationId, {
-          name: name.trim(),
-          formationType,
-          players: playersData,
-        });
+        await updateFormation(teamId, formationId, payload);
       } else {
-        await createFormation(teamId, {
-          name: name.trim(),
-          formationType,
-          players: playersData,
-        });
+        await createFormation(teamId, payload);
       }
       navigate(`/teams/${teamId}`);
     } catch (err: unknown) {
@@ -280,7 +339,34 @@ export function FormationBuilderPage() {
   const assignedPlayerIds = new Set(
     slots.filter((s) => s.playerId).map((s) => s.playerId!)
   );
+  const starterCount = slots.filter((s) => s.playerId && !subData[s.slotPosition]?.isSubstitute).length;
+  const subCount = slots.filter((s) => s.playerId && subData[s.slotPosition]?.isSubstitute).length;
   const playerCount = assignedPlayerIds.size;
+
+  // Toggle substitute status for a slot
+  const toggleSubstitute = useCallback((slotPosition: string) => {
+    setSubData((prev) => {
+      const current = prev[slotPosition];
+      if (current?.isSubstitute) {
+        // Remove substitute status
+        const next = { ...prev };
+        delete next[slotPosition];
+        return next;
+      }
+      return {
+        ...prev,
+        [slotPosition]: { isSubstitute: true, subInMinute: 45 },
+      };
+    });
+  }, []);
+
+  // Update subInMinute for a substitute
+  const updateSubInMinute = useCallback((slotPosition: string, minute: number | null) => {
+    setSubData((prev) => ({
+      ...prev,
+      [slotPosition]: { ...prev[slotPosition], subInMinute: minute },
+    }));
+  }, []);
 
   // Handle right-click / double-click to remove from slot
   const handleSlotContext = useCallback(
@@ -337,6 +423,69 @@ export function FormationBuilderPage() {
         </div>
       )}
 
+      {/* Match Metadata Fields */}
+      <div className="mx-4 mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Datos del partido</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label htmlFor="matchDate" className="block text-xs font-medium text-gray-500 mb-1">
+              Fecha del partido
+            </label>
+            <input
+              id="matchDate"
+              type="date"
+              value={matchDate}
+              onChange={(e) => setMatchDate(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="opponent" className="block text-xs font-medium text-gray-500 mb-1">
+              Rival
+            </label>
+            <input
+              id="opponent"
+              type="text"
+              value={opponent}
+              onChange={(e) => setOpponent(e.target.value)}
+              placeholder="Nombre del rival"
+              className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="scoreHome" className="block text-xs font-medium text-gray-500 mb-1">
+              Goles (local)
+            </label>
+            <input
+              id="scoreHome"
+              type="number"
+              min={0}
+              value={scoreHome}
+              onChange={(e) => setScoreHome(e.target.value)}
+              placeholder="0"
+              className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="scoreAway" className="block text-xs font-medium text-gray-500 mb-1">
+              Goles (visitante)
+            </label>
+            <input
+              id="scoreAway"
+              type="number"
+              min={0}
+              value={scoreAway}
+              onChange={(e) => setScoreAway(e.target.value)}
+              placeholder="0"
+              className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+            />
+          </div>
+        </div>
+        <div className="mt-2 text-xs text-gray-400">
+          Titulares: {starterCount} · Suplentes: {subCount} · Total: {playerCount} (mín. 17, máx. 23)
+        </div>
+      </div>
+
       {/* Instructions */}
       <div className="mx-4 mt-3 text-xs text-gray-400 flex gap-4">
         <span>🖱️ Arrastrá jugadores a la cancha</span>
@@ -389,17 +538,48 @@ export function FormationBuilderPage() {
           {/* Right-click context: selected slot */}
           {selectedSlot && (() => {
             const slot = slots.find((s) => s.slotPosition === selectedSlot);
+            const sub = subData[selectedSlot];
             return slot?.playerId ? (
               <div className="px-3 py-2 bg-yellow-50 border-b border-yellow-200">
                 <p className="text-xs text-yellow-700">
                   Posición: <strong>{selectedSlot}</strong>
                 </p>
-                <button
-                  onClick={() => handleRemoveFromSlot(selectedSlot)}
-                  className="text-xs text-red-600 hover:text-red-800 underline mt-1"
-                >
-                  Quitar jugador de esta posición
-                </button>
+                <div className="flex items-center gap-2 mt-1">
+                  <button
+                    onClick={() => toggleSubstitute(selectedSlot)}
+                    className={`text-xs px-2 py-0.5 rounded transition-colors ${
+                      sub?.isSubstitute
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {sub?.isSubstitute ? 'Suplente ✓' : 'Marcar como suplente'}
+                  </button>
+                  <button
+                    onClick={() => handleRemoveFromSlot(selectedSlot)}
+                    className="text-xs text-red-600 hover:text-red-800 underline"
+                  >
+                    Quitar
+                  </button>
+                </div>
+                {sub?.isSubstitute && (
+                  <div className="mt-1.5">
+                    <label className="text-xs text-blue-600">Min. ingreso:</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={120}
+                      value={sub.subInMinute ?? ''}
+                      onChange={(e) =>
+                        updateSubInMinute(
+                          selectedSlot,
+                          e.target.value ? parseInt(e.target.value, 10) : null
+                        )
+                      }
+                      className="w-16 ml-1 border border-blue-300 rounded px-1 py-0.5 text-xs"
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <div className="px-3 py-2 bg-green-50 border-b border-green-200">

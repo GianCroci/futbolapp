@@ -8,6 +8,7 @@ import { TeamDetailPage } from './pages/TeamDetail';
 import { FormationHistoryPage } from './pages/FormationHistory';
 import { FormationViewPage } from './pages/FormationView';
 import FormationBuilderPage from './pages/FormationBuilder';
+import { StatsPage } from './pages/StatsPage';
 
 function App() {
   const { isLoading, error } = useAuth0();
@@ -92,6 +93,14 @@ function App() {
           element={
             <ProtectedRoute>
               <FormationViewPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teams/:teamId/stats"
+          element={
+            <ProtectedRoute>
+              <StatsPage />
             </ProtectedRoute>
           }
         />
