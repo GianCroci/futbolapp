@@ -76,3 +76,15 @@ export interface PlayerStat {
   redCards: number;
   appearances: number;
 }
+
+// Substitution
+export interface Substitution {
+  id: string;
+  formationId: string;
+  playerOutId: string;
+  playerInId: string;
+  minute: number;
+  createdAt: string;
+  playerOut?: Player;
+  playerIn?: Player;
+}

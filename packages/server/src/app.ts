@@ -6,6 +6,7 @@ import teamRoutes from './routes/teams';
 import playerRoutes from './routes/players';
 import formationRoutes from './routes/formations';
 import matchEventRoutes from './routes/matchEvents';
+import substitutionRoutes from './routes/substitutions';
 import statsRoutes from './routes/stats';
 import { errorHandler, notFoundHandler } from './middleware/error';
 
@@ -25,6 +26,7 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/teams/:teamId/players', playerRoutes);
 app.use('/api/teams/:teamId/formations', formationRoutes);
 app.use('/api/teams/:teamId/formations/:formationId/events', matchEventRoutes);
+app.use('/api/teams/:teamId/formations/:formationId/substitutions', substitutionRoutes);
 app.use('/api/teams/:teamId/stats', statsRoutes);
 
 // Health check

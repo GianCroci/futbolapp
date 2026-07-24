@@ -48,11 +48,11 @@ export function TeamCard({ team, onEdit, onDelete, onClick }: TeamCardProps) {
       <div className="flex gap-4 text-sm text-gray-500">
         <div className="flex items-center gap-1">
           <span className="text-lg">👥</span>
-          <span>{team.playerCount ?? 0} jugadores</span>
+          <span>{team._count?.players ?? 0} jugadores</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="text-lg">📋</span>
-          <span>{team.formationCount ?? 0} formaciones</span>
+          <span>{team._count?.formations ?? 0} formaciones</span>
         </div>
       </div>
     </div>

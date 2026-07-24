@@ -13,14 +13,15 @@ const router = Router({ mergeParams: true });
 
 router.use(requireAuth);
 
-// GET /api/teams/:teamId/players — list players, optional ?position filter
+// GET /api/teams/:teamId/players — list players, optional ?position=ARQUERO,DEFENSOR_CENTRAL
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     const teamId = req.params.teamId as string;
-    const position = req.query.position as string | undefined;
+    const positionParam = req.query.position as string | undefined;
+    const positions = positionParam ? positionParam.split(',').map((p) => p.trim()) : undefined;
 
-    const players = await listPlayers(teamId, authReq.user!.userId, position);
+    const players = await listPlayers(teamId, authReq.user!.userId, positions);
     if (players === null) {
       res.status(404).json({ error: 'Equipo no encontrado' });
       return;

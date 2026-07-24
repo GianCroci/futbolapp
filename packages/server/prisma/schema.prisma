@@ -65,16 +65,18 @@ model Team {
 }
 
 model Player {
-  id          String        @id @default(uuid())
-  name        String
-  position    Position
-  dorsal      Int?
-  teamId      String
-  team        Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  formations  FormationPlayer[]
-  matchEvents MatchEvent[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id              String             @id @default(uuid())
+  name            String
+  position        Position
+  dorsal          Int?
+  teamId          String
+  team            Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  formations      FormationPlayer[]
+  matchEvents     MatchEvent[]
+  substitutionsOut Substitution[]    @relation("PlayerOut")
+  substitutionsIn  Substitution[]    @relation("PlayerIn")
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 
   @@unique([teamId, dorsal])
   @@index([teamId])
@@ -95,6 +97,7 @@ model Formation {
   updatedAt     DateTime           @updatedAt
   players       FormationPlayer[]
   events        MatchEvent[]
+  substitutions Substitution[]
 
   @@index([teamId])
 }
@@ -128,4 +131,20 @@ model MatchEvent {
 
   @@index([formationId])
   @@index([playerId])
+}
+
+model Substitution {
+  id          String    @id @default(uuid())
+  formationId String
+  formation   Formation @relation(fields: [formationId], references: [id], onDelete: Cascade)
+  playerOutId String
+  playerOut   Player    @relation("PlayerOut", fields: [playerOutId], references: [id], onDelete: Cascade)
+  playerInId  String
+  playerIn    Player    @relation("PlayerIn", fields: [playerInId], references: [id], onDelete: Cascade)
+  minute      Int
+  createdAt   DateTime  @default(now())
+
+  @@index([formationId])
+  @@index([playerOutId])
+  @@index([playerInId])
 }

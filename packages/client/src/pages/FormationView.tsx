@@ -4,16 +4,20 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { useFormationStore, SlotAssignment } from '../store/formationStore';
 import { useMatchEventStore } from '../store/matchEventStore';
+import { useSubstitutionStore } from '../store/substitutionStore';
 import { getPresetPositions } from '../utils/formationPresets';
 import { EventForm } from '../components/match/EventForm';
 import { EventList } from '../components/match/EventList';
+import { SubstitutionModal } from '../components/match/SubstitutionModal';
 
 export function FormationViewPage() {
   const { teamId, formationId } = useParams<{ teamId: string; formationId: string }>();
   const navigate = useNavigate();
   const { currentFormation, isLoading, fetchFormation } = useFormationStore();
   const { events, fetchEvents } = useMatchEventStore();
+  const { substitutions, fetchSubstitutions, deleteSubstitution } = useSubstitutionStore();
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
+  const [isSubstitutionModalOpen, setIsSubstitutionModalOpen] = useState(false);
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
   const [editOpponent, setEditOpponent] = useState('');
   const [editScoreHome, setEditScoreHome] = useState('');
@@ -29,6 +33,10 @@ export function FormationViewPage() {
   useEffect(() => {
     if (teamId && formationId) fetchEvents(teamId, formationId);
   }, [teamId, formationId, fetchEvents]);
+
+  useEffect(() => {
+    if (teamId && formationId) fetchSubstitutions(teamId, formationId);
+  }, [teamId, formationId, fetchSubstitutions]);
 
   useEffect(() => {
     if (currentFormation) {
@@ -61,6 +69,23 @@ export function FormationViewPage() {
     }
     return map;
   }, [currentFormation]);
+
+  const starters = useMemo(
+    () => currentFormation?.players.filter((fp) => !fp.isSubstitute) ?? [],
+    [currentFormation]
+  );
+
+  const substitutes = useMemo(
+    () => currentFormation?.players.filter((fp) => fp.isSubstitute) ?? [],
+    [currentFormation]
+  );
+
+  const hasSubstitutes = substitutes.length > 0;
+
+  const handleDeleteSubstitution = async (subId: string) => {
+    if (!teamId || !formationId) return;
+    await deleteSubstitution(teamId, formationId, subId);
+  };
 
   const getFormationLabel = (ft: string | null): string => {
     if (!ft) return 'Personalizado';
@@ -308,17 +333,63 @@ export function FormationViewPage() {
       <div className="mt-8 max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-gray-700">Eventos del partido</h3>
-          <button
-            onClick={() => setIsEventFormOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Agregar evento
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsSubstitutionModalOpen(true)}
+              disabled={!hasSubstitutes}
+              title={hasSubstitutes ? 'Registrar sustitución' : 'No hay suplentes designados'}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              Registrar sustitución
+            </button>
+            <button
+              onClick={() => setIsEventFormOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Agregar evento
+            </button>
+          </div>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
+          {/* Substitutions list */}
+          {substitutions.length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Sustituciones
+              </h4>
+              <div className="space-y-2">
+                {substitutions.map((sub) => (
+                  <div
+                    key={sub.id}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-amber-700 bg-amber-50"
+                  >
+                    <span className="text-lg">🔄</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">
+                        Min {sub.minute}: {playerNames[sub.playerOutId] ?? 'Jugador'} sale →{' '}
+                        {playerNames[sub.playerInId] ?? 'Jugador'} entra
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteSubstitution(sub.id)}
+                      className="p-1 opacity-50 hover:opacity-100 transition-opacity"
+                      title="Eliminar sustitución"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <EventList
             events={events}
             teamId={teamId!}
@@ -334,6 +405,15 @@ export function FormationViewPage() {
         teamId={teamId!}
         formationId={formationId!}
         players={currentFormation.players}
+      />
+
+      <SubstitutionModal
+        isOpen={isSubstitutionModalOpen}
+        onClose={() => setIsSubstitutionModalOpen(false)}
+        teamId={teamId!}
+        formationId={formationId!}
+        starters={starters}
+        substitutes={substitutes}
       />
     </AppLayout>
   );
