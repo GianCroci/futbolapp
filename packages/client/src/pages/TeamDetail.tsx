@@ -12,6 +12,7 @@ import { PlayerTable } from '../components/players/PlayerTable';
 import { PlayerForm } from '../components/players/PlayerForm';
 import { PlayerFilter } from '../components/players/PlayerFilter';
 import { StatsTable } from '../components/stats/StatsTable';
+import { StatsCharts } from '../components/stats/StatsCharts';
 import { Player, Formation } from '../types';
 import { getPresetPositions } from '../utils/formationPresets';
 
@@ -407,8 +408,17 @@ export function TeamDetailPage() {
               <LoadingSpinner size="lg" />
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <StatsTable stats={stats} />
+            <div>
+              {/* Charts row: 33% each */}
+              <StatsCharts stats={stats} />
+
+              {/* Detailed Table */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-5 py-3 border-b border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-700">Detalle por jugador</h3>
+                </div>
+                <StatsTable stats={stats} />
+              </div>
             </div>
           )}
         </div>
