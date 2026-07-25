@@ -10,6 +10,7 @@ import { exportFormationPdf } from '../utils/pdfExport';
 import { EventForm } from '../components/match/EventForm';
 import { EventList } from '../components/match/EventList';
 import { SubstitutionModal } from '../components/match/SubstitutionModal';
+import { CitacionModal } from '../components/match/CitacionModal';
 
 export function FormationViewPage() {
   const { teamId, formationId } = useParams<{ teamId: string; formationId: string }>();
@@ -28,6 +29,7 @@ export function FormationViewPage() {
   const [isEditingComments, setIsEditingComments] = useState(false);
   const [isSavingComments, setIsSavingComments] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isCitacionOpen, setIsCitacionOpen] = useState(false);
   const pitchRef = useRef<HTMLDivElement>(null);
 
   const [slots, setSlots] = useState<SlotAssignment[]>([]);
@@ -283,6 +285,15 @@ export function FormationViewPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setIsCitacionOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              Generar Citación
+            </button>
+            <button
               onClick={handleExportPdf}
               disabled={isExporting}
               className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
@@ -534,6 +545,20 @@ export function FormationViewPage() {
         formationId={formationId!}
         starters={starters}
         substitutes={substitutes}
+      />
+
+      <CitacionModal
+        isOpen={isCitacionOpen}
+        onClose={() => setIsCitacionOpen(false)}
+        formationName={currentFormation.name}
+        opponent={currentFormation.opponent ?? null}
+        matchDate={currentFormation.matchDate ?? null}
+        formationType={currentFormation.formationType}
+        players={starters.map((fp) => ({
+          name: (fp.player as { name: string } | undefined)?.name ?? fp.playerId,
+          dorsal: (fp.player as { dorsal: number | null } | undefined)?.dorsal ?? null,
+          slotPosition: fp.slotPosition,
+        }))}
       />
     </AppLayout>
   );
