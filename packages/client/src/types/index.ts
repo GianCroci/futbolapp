@@ -37,6 +37,7 @@ export interface Formation {
   scoreHome?: number | null;
   scoreAway?: number | null;
   opponent?: string | null;
+  comments?: string | null;
 }
 
 export interface FormationPlayer {

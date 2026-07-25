@@ -13,7 +13,7 @@ import { SubstitutionModal } from '../components/match/SubstitutionModal';
 export function FormationViewPage() {
   const { teamId, formationId } = useParams<{ teamId: string; formationId: string }>();
   const navigate = useNavigate();
-  const { currentFormation, isLoading, fetchFormation, updatePlayerRating } = useFormationStore();
+  const { currentFormation, isLoading, fetchFormation, updatePlayerRating, updateComments } = useFormationStore();
   const { events, fetchEvents } = useMatchEventStore();
   const { substitutions, fetchSubstitutions, deleteSubstitution } = useSubstitutionStore();
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
@@ -23,6 +23,9 @@ export function FormationViewPage() {
   const [editScoreHome, setEditScoreHome] = useState('');
   const [editScoreAway, setEditScoreAway] = useState('');
   const [editMatchDate, setEditMatchDate] = useState('');
+  const [commentsText, setCommentsText] = useState('');
+  const [isEditingComments, setIsEditingComments] = useState(false);
+  const [isSavingComments, setIsSavingComments] = useState(false);
 
   const [slots, setSlots] = useState<SlotAssignment[]>([]);
 
@@ -421,6 +424,65 @@ export function FormationViewPage() {
             formationId={formationId!}
             playerNames={playerNames}
           />
+        </div>
+      </div>
+
+      {/* DT Comments / Analysis */}
+      <div className="mt-8 max-w-2xl mx-auto">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-700">Análisis del DT</h3>
+          {!isEditingComments && (
+            <button
+              onClick={() => {
+                setCommentsText(currentFormation.comments || '');
+                setIsEditingComments(true);
+              }}
+              className="px-2 py-1 text-xs text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
+            >
+              {currentFormation.comments ? 'Editar' : 'Agregar análisis'}
+            </button>
+          )}
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          {isEditingComments ? (
+            <div>
+              <textarea
+                value={commentsText}
+                onChange={(e) => setCommentsText(e.target.value)}
+                placeholder="Escribí tu análisis del partido: qué funcionó, qué no, jugadas clave, ajustes para el próximo partido..."
+                rows={6}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-y focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+              />
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={async () => {
+                    if (!teamId || !formationId) return;
+                    setIsSavingComments(true);
+                    try {
+                      await updateComments(teamId, formationId, commentsText.trim() || null);
+                      setIsEditingComments(false);
+                    } finally {
+                      setIsSavingComments(false);
+                    }
+                  }}
+                  disabled={isSavingComments}
+                  className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                >
+                  {isSavingComments ? 'Guardando...' : 'Guardar'}
+                </button>
+                <button
+                  onClick={() => setIsEditingComments(false)}
+                  className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : currentFormation.comments ? (
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{currentFormation.comments}</p>
+          ) : (
+            <p className="text-sm text-gray-400 italic">Sin análisis registrado</p>
+          )}
         </div>
       </div>
 

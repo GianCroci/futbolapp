@@ -8,8 +8,9 @@ import {
   deleteFormation,
   updatePlayerRating,
 } from '../services/formation.service';
-import { FormationType } from '@prisma/client';
+import { FormationType, PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient();
 const router = Router({ mergeParams: true });
 
 router.use(requireAuth);
@@ -234,6 +235,42 @@ router.patch('/:formationId/players/:playerId/rating', async (req: Request, res:
       res.status(404).json({ error: 'Formación o jugador no encontrado' });
       return;
     }
+
+    res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH /api/teams/:teamId/formations/:formationId — update comments
+router.patch('/:formationId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authReq = req as AuthRequest;
+    const teamId = req.params.teamId as string;
+    const formationId = req.params.formationId as string;
+    const { comments } = req.body;
+
+    if (typeof comments !== 'string' && comments !== null) {
+      res.status(400).json({ error: 'Los comentarios deben ser texto o null' });
+      return;
+    }
+
+    const team = await prisma.team.findFirst({ where: { id: teamId, userId: authReq.user!.userId } });
+    if (!team) {
+      res.status(404).json({ error: 'Equipo no encontrado' });
+      return;
+    }
+
+    const formation = await prisma.formation.findFirst({ where: { id: formationId, teamId } });
+    if (!formation) {
+      res.status(404).json({ error: 'Formación no encontrada' });
+      return;
+    }
+
+    const updated = await prisma.formation.update({
+      where: { id: formationId },
+      data: { comments: comments || null },
+    });
 
     res.json(updated);
   } catch (error) {

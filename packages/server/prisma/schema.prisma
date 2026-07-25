@@ -91,6 +91,7 @@ model Formation {
   scoreHome     Int?
   scoreAway     Int?
   opponent      String?
+  comments      String?
   teamId        String
   team          Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
   createdAt     DateTime           @default(now())

@@ -38,6 +38,7 @@ interface FormationState {
   }) => Promise<void>;
   deleteFormation: (teamId: string, formationId: string) => Promise<void>;
   updatePlayerRating: (teamId: string, formationId: string, playerId: string, rating: number | null) => Promise<void>;
+  updateComments: (teamId: string, formationId: string, comments: string | null) => Promise<void>;
   clearError: () => void;
 }
 
@@ -94,7 +95,7 @@ export const useFormationStore = create<FormationState>((set, get) => ({
   updatePlayerRating: async (teamId, formationId, playerId, rating) => {
     const response = await api.patch(`/teams/${teamId}/formations/${formationId}/players/${playerId}/rating`, { rating });
     set((state) => {
-      if (!state.currentFormation || state.currentFormation.id !== formationId) return state;
+      if (!state.currentFormation || state.currentFormation.id !== formationId) return {};
       return {
         currentFormation: {
           ...state.currentFormation,
@@ -102,7 +103,19 @@ export const useFormationStore = create<FormationState>((set, get) => ({
             fp.playerId === playerId ? { ...fp, rating: response.data.rating } : fp
           ),
         },
-      };
+      } as Partial<FormationState>;
     });
+  },
+
+  updateComments: async (teamId, formationId, comments) => {
+    const response = await api.patch(`/teams/${teamId}/formations/${formationId}`, { comments });
+    set((state) => ({
+      currentFormation: state.currentFormation?.id === formationId
+        ? { ...state.currentFormation, comments: response.data.comments }
+        : state.currentFormation,
+      formations: state.formations.map((f) =>
+        f.id === formationId ? { ...f, comments: response.data.comments } : f
+      ),
+    } as Partial<FormationState>));
   },
 }));
