@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useAuthStore } from '../../store/authStore';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 
 interface ProtectedRouteProps {
@@ -8,8 +9,9 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
+  const accessToken = useAuthStore((s) => s.accessToken);
 
-  if (isLoading) {
+  if (isLoading || (isAuthenticated && !accessToken)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />

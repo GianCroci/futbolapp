@@ -9,13 +9,18 @@ interface PlayerInput {
   dorsal?: number | null;
 }
 
-export async function listPlayers(teamId: string, userId: string, position?: string) {
+export async function listPlayers(teamId: string, userId: string, positions?: string[]) {
   const team = await prisma.team.findFirst({ where: { id: teamId, userId } });
   if (!team) return null;
 
-  const where: { teamId: string; position?: Position } = { teamId };
-  if (position && Object.values(Position).includes(position as Position)) {
-    where.position = position as Position;
+  const where: { teamId: string; position?: { in: Position[] } } = { teamId };
+  if (positions && positions.length > 0) {
+    const valid = positions.filter((p): p is Position =>
+      Object.values(Position).includes(p as Position)
+    );
+    if (valid.length > 0) {
+      where.position = { in: valid };
+    }
   }
 
   return prisma.player.findMany({

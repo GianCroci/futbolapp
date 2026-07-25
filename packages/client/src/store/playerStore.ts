@@ -6,7 +6,7 @@ interface PlayerState {
   players: Player[];
   isLoading: boolean;
   error: string | null;
-  fetchPlayers: (teamId: string, position?: string) => Promise<void>;
+  fetchPlayers: (teamId: string, positions?: string[]) => Promise<void>;
   createPlayer: (teamId: string, data: { name: string; position: string; dorsal?: number | null }) => Promise<void>;
   updatePlayer: (teamId: string, playerId: string, data: { name?: string; position?: string; dorsal?: number | null }) => Promise<void>;
   deletePlayer: (teamId: string, playerId: string) => Promise<void>;
@@ -20,10 +20,13 @@ export const usePlayerStore = create<PlayerState>((set) => ({
 
   clearError: () => set({ error: null }),
 
-  fetchPlayers: async (teamId: string, position?: string) => {
+  fetchPlayers: async (teamId: string, positions?: string[]) => {
     set({ isLoading: true, error: null });
     try {
-      const params = position ? { position } : {};
+      const params: Record<string, string> = {};
+      if (positions && positions.length > 0) {
+        params.position = positions.join(',');
+      }
       const response = await api.get(`/teams/${teamId}/players`, { params });
       set({ players: response.data, isLoading: false });
     } catch (error: unknown) {

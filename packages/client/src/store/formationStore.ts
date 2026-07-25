@@ -37,6 +37,7 @@ interface FormationState {
     players: { playerId: string; positionX: number; positionY: number; slotPosition: string; isSubstitute?: boolean; subInMinute?: number | null; subOutMinute?: number | null }[];
   }) => Promise<void>;
   deleteFormation: (teamId: string, formationId: string) => Promise<void>;
+  updatePlayerRating: (teamId: string, formationId: string, playerId: string, rating: number | null) => Promise<void>;
   clearError: () => void;
 }
 
@@ -88,5 +89,20 @@ export const useFormationStore = create<FormationState>((set, get) => ({
       formations: state.formations.filter((f) => f.id !== formationId),
       currentFormation: state.currentFormation?.id === formationId ? null : state.currentFormation,
     }));
+  },
+
+  updatePlayerRating: async (teamId, formationId, playerId, rating) => {
+    const response = await api.patch(`/teams/${teamId}/formations/${formationId}/players/${playerId}/rating`, { rating });
+    set((state) => {
+      if (!state.currentFormation || state.currentFormation.id !== formationId) return state;
+      return {
+        currentFormation: {
+          ...state.currentFormation,
+          players: state.currentFormation.players.map((fp) =>
+            fp.playerId === playerId ? { ...fp, rating: response.data.rating } : fp
+          ),
+        },
+      };
+    });
   },
 }));

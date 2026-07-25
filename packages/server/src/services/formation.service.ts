@@ -138,4 +138,33 @@ export async function deleteFormation(teamId: string, formationId: string, userI
   return true;
 }
 
+export async function updatePlayerRating(
+  teamId: string,
+  formationId: string,
+  playerId: string,
+  userId: string,
+  rating: number | null
+) {
+  const team = await prisma.team.findFirst({ where: { id: teamId, userId } });
+  if (!team) return null;
+
+  const formation = await prisma.formation.findFirst({ where: { id: formationId, teamId } });
+  if (!formation) return null;
+
+  if (rating !== null && (rating < 1 || rating > 10)) {
+    throw new Error('Rating must be between 1 and 10');
+  }
+
+  const fp = await prisma.formationPlayer.findUnique({
+    where: { formationId_playerId: { formationId, playerId } },
+  });
+  if (!fp) return null;
+
+  return prisma.formationPlayer.update({
+    where: { id: fp.id },
+    data: { rating },
+    include: { player: true },
+  });
+}
+
 export { FormationType };

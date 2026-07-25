@@ -16,8 +16,6 @@ const EVENT_TYPES: { value: MatchEventType; label: string }[] = [
   { value: 'ASSIST', label: 'Asistencia' },
   { value: 'YELLOW_CARD', label: 'Tarjeta amarilla' },
   { value: 'RED_CARD', label: 'Tarjeta roja' },
-  { value: 'SUB_IN', label: 'Ingreso' },
-  { value: 'SUB_OUT', label: 'Salida' },
 ];
 
 export function EventForm({ isOpen, onClose, teamId, formationId, players }: EventFormProps) {

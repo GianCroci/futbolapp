@@ -1,10 +1,16 @@
 interface PlayerFilterProps {
-  positions: { value: string; label: string }[];
   active: string | null;
-  onChange: (position: string | null) => void;
+  onChange: (category: string | null) => void;
 }
 
-export function PlayerFilter({ positions, active, onChange }: PlayerFilterProps) {
+const CATEGORIES: { value: string; label: string; icon: string }[] = [
+  { value: 'ARQUERO', label: 'Arquero', icon: '🧤' },
+  { value: 'DEFENSOR', label: 'Defensores', icon: '🛡️' },
+  { value: 'MEDIOCAMPO', label: 'Mediocampo', icon: '⚙️' },
+  { value: 'DELANTERO', label: 'Delanteros', icon: '🥅' },
+];
+
+export function PlayerFilter({ active, onChange }: PlayerFilterProps) {
   return (
     <div className="flex flex-wrap gap-2">
       <button
@@ -15,19 +21,19 @@ export function PlayerFilter({ positions, active, onChange }: PlayerFilterProps)
             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
         }`}
       >
-        Todas
+        Todos
       </button>
-      {positions.map((pos) => (
+      {CATEGORIES.map((cat) => (
         <button
-          key={pos.value}
-          onClick={() => onChange(pos.value === active ? null : pos.value)}
+          key={cat.value}
+          onClick={() => onChange(cat.value === active ? null : cat.value)}
           className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
-            active === pos.value
+            active === cat.value
               ? 'bg-green-600 text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          {pos.label}
+          {cat.icon} {cat.label}
         </button>
       ))}
     </div>

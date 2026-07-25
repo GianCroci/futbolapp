@@ -5,15 +5,15 @@ const prisma = new PrismaClient();
 export interface PlayerStat {
   playerId: string;
   playerName: string;
+  position: string;
   dorsal: number | null;
   goals: number;
   assists: number;
   yellowCards: number;
   redCards: number;
-  matchesPlayed: number;
-  minutesPlayed: number;
-  subIns: number;
-  subOuts: number;
+  appearances: number;
+  totalMinutes: number;
+  avgRating: number | null;
 }
 
 export async function getTeamStats(
@@ -44,6 +44,7 @@ export async function getTeamStats(
           player: true,
         },
       },
+      substitutions: true,
     },
   });
 
@@ -52,48 +53,63 @@ export async function getTeamStats(
     string,
     {
       playerName: string;
+      position: string;
       dorsal: number | null;
       goals: number;
       assists: number;
       yellowCards: number;
       redCards: number;
-      matchesPlayed: number;
-      minutesPlayed: number;
-      subIns: number;
-      subOuts: number;
+      appearances: number;
+      totalMinutes: number;
+      ratings: number[];
     }
   >();
 
   for (const formation of formations) {
+    // Build substitution lookups for this formation
+    const subbedOut = new Map<string, number>(); // playerOutId → minute
+    const subbedIn = new Map<string, number>(); // playerInId → minute
+    for (const sub of formation.substitutions) {
+      subbedOut.set(sub.playerOutId, sub.minute);
+      subbedIn.set(sub.playerInId, sub.minute);
+    }
+
     // Process formation players for minutes and match participation
     for (const fp of formation.players) {
       const existing = statsMap.get(fp.playerId) || {
         playerName: fp.player.name,
+        position: fp.player.position,
         dorsal: fp.player.dorsal,
         goals: 0,
         assists: 0,
         yellowCards: 0,
         redCards: 0,
-        matchesPlayed: 0,
-        minutesPlayed: 0,
-        subIns: 0,
-        subOuts: 0,
+        appearances: 0,
+        totalMinutes: 0,
+        ratings: [],
       };
 
-      existing.matchesPlayed++;
-
-      // Calculate minutes
+      let minutes = 0;
       if (!fp.isSubstitute) {
-        // Starters: assume 90 minutes
-        existing.minutesPlayed += 90;
+        // Starter: check if subbed out
+        const subOutMinute = subbedOut.get(fp.playerId);
+        minutes = subOutMinute ?? 90;
       } else {
-        // Subs: use subOutMinute - subInMinute (if available)
-        if (fp.subInMinute !== null && fp.subOutMinute !== null) {
-          existing.minutesPlayed += fp.subOutMinute - fp.subInMinute;
-        } else if (fp.subInMinute !== null) {
-          // Subbed in but didn't sub out: assume played until end (90 min)
-          existing.minutesPlayed += 90 - fp.subInMinute;
+        // Substitute: check if subbed in
+        const subInMinute = subbedIn.get(fp.playerId);
+        if (subInMinute !== undefined) {
+          minutes = 90 - subInMinute;
         }
+      }
+
+      if (minutes > 0) {
+        existing.appearances++;
+        existing.totalMinutes += minutes;
+      }
+
+      // Track rating if present
+      if (fp.rating !== null && fp.rating !== undefined) {
+        existing.ratings.push(fp.rating);
       }
 
       statsMap.set(fp.playerId, existing);
@@ -117,18 +133,24 @@ export async function getTeamStats(
         case 'RED_CARD':
           existing.redCards++;
           break;
-        case 'SUB_IN':
-          existing.subIns++;
-          break;
-        case 'SUB_OUT':
-          existing.subOuts++;
-          break;
+        // SUB_IN/SUB_OUT kept in enum for backwards compat, not counted
       }
     }
   }
 
   return Array.from(statsMap.entries()).map(([playerId, stats]) => ({
     playerId,
-    ...stats,
+    playerName: stats.playerName,
+    position: stats.position,
+    dorsal: stats.dorsal,
+    goals: stats.goals,
+    assists: stats.assists,
+    yellowCards: stats.yellowCards,
+    redCards: stats.redCards,
+    appearances: stats.appearances,
+    totalMinutes: stats.totalMinutes,
+    avgRating: stats.ratings.length > 0
+      ? Math.round((stats.ratings.reduce((a, b) => a + b, 0) / stats.ratings.length) * 10) / 10
+      : null,
   }));
 }
