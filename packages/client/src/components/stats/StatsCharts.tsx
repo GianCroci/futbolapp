@@ -10,8 +10,19 @@ interface StatsChartsProps {
 
 const PIE_COLORS = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4', '#EC4899', '#14B8A6'];
 
+function EmptyChart({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-[240px] text-gray-400">
+      <svg className="w-10 h-10 mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+      </svg>
+      <span className="text-xs">{message}</span>
+    </div>
+  );
+}
+
 export function StatsCharts({ stats }: StatsChartsProps) {
-  // Pie chart: goals by player
   const goalsByPlayer = useMemo(() => {
     return [...stats]
       .filter((s) => s.goals > 0)
@@ -22,7 +33,6 @@ export function StatsCharts({ stats }: StatsChartsProps) {
       }));
   }, [stats]);
 
-  // Bar chart: top 5 minutes played
   const top5Minutes = useMemo(() => {
     return [...stats]
       .sort((a, b) => b.totalMinutes - a.totalMinutes)
@@ -33,7 +43,6 @@ export function StatsCharts({ stats }: StatsChartsProps) {
       }));
   }, [stats]);
 
-  // Bar chart: top 5 rating
   const top5Rating = useMemo(() => {
     return [...stats]
       .filter((s) => s.avgRating != null)
@@ -44,17 +53,6 @@ export function StatsCharts({ stats }: StatsChartsProps) {
         rating: s.avgRating ?? 0,
       }));
   }, [stats]);
-
-  const hasAnyData = goalsByPlayer.length > 0 || top5Minutes.length > 0 || top5Rating.length > 0;
-
-  if (!hasAnyData) {
-    return (
-      <div className="text-center py-12 mb-6">
-        <div className="text-5xl mb-3">📊</div>
-        <p className="text-gray-500">No hay datos suficientes para mostrar gráficos.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -83,9 +81,7 @@ export function StatsCharts({ stats }: StatsChartsProps) {
             </PieChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-[240px] text-gray-400 text-sm">
-            Sin goles registrados
-          </div>
+          <EmptyChart message="Sin goles registrados" />
         )}
       </div>
 
@@ -103,9 +99,7 @@ export function StatsCharts({ stats }: StatsChartsProps) {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-[240px] text-gray-400 text-sm">
-            Sin datos de minutos
-          </div>
+          <EmptyChart message="Sin datos de minutos" />
         )}
       </div>
 
@@ -123,9 +117,7 @@ export function StatsCharts({ stats }: StatsChartsProps) {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-[240px] text-gray-400 text-sm">
-            Sin ratings asignados
-          </div>
+          <EmptyChart message="Sin ratings asignados" />
         )}
       </div>
     </div>
