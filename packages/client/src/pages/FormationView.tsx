@@ -354,6 +354,55 @@ export function FormationViewPage() {
         </div>
       </div>
 
+      {/* Substitutes bench */}
+      {substitutes.length > 0 && (
+        <div className="mt-6 max-w-2xl mx-auto">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Banco de suplentes</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {substitutes.map((fp) => {
+              const player = fp.player as { name: string; dorsal: number | null } | undefined;
+              return (
+                <div
+                  key={fp.id}
+                  className="flex items-center gap-3 px-3 py-2 bg-amber-50 rounded-lg border border-amber-200"
+                >
+                  <span className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-sm font-bold font-mono">
+                    {player?.dorsal ?? '?'}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">
+                      {player?.name || fp.playerId}
+                    </p>
+                    <p className="text-xs text-amber-600">
+                      {fp.subInMinute != null ? `Entra min ${fp.subInMinute}` : 'Sin minuto definido'}
+                    </p>
+                  </div>
+                  {/* Rating selector */}
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => {
+                          if (!teamId || !formationId || !fp.playerId) return;
+                          updatePlayerRating(teamId, formationId, fp.playerId, n === fp.rating ? null : n);
+                        }}
+                        className={`w-5 h-5 rounded text-[10px] font-medium transition-colors ${
+                          n === fp.rating
+                            ? 'bg-amber-600 text-white'
+                            : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Match Events */}
       <div className="mt-8 max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-3">
