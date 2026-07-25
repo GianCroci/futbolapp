@@ -10,7 +10,6 @@ interface Player {
 interface CitacionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  formationName: string;
   opponent: string | null;
   matchDate: string | null;
   formationType: string | null;
@@ -19,22 +18,19 @@ interface CitacionModalProps {
 
 const DEFAULT_TEMPLATE = `⚽ *Citación - {formacion}*
 
-Hola {nombre}! Sos parte del grupo para el partido:
-
 🆚 Rival: {rival}
 📅 Fecha: {fecha}
-👕 Dorsal: #{dorsal}
-📍 Posición: {posicion}
 
-¡A darlo todo! 💪`;
+📋 *Plantel convocado:*
+{plantel}
+
+¡A prepararse que viene el partido! 💪`;
 
 const AVAILABLE_VARS = [
-  { key: '{nombre}', desc: 'Nombre del jugador' },
-  { key: '{dorsal}', desc: 'Dorsal' },
-  { key: '{posicion}', desc: 'Posición en la formación' },
+  { key: '{formacion}', desc: 'Tipo de formación (4-3-3, etc.)' },
   { key: '{rival}', desc: 'Rival' },
   { key: '{fecha}', desc: 'Fecha del partido' },
-  { key: '{formacion}', desc: 'Tipo de formación (4-3-3, etc.)' },
+  { key: '{plantel}', desc: 'Lista de jugadores con dorsal y posición' },
 ];
 
 const FORMATION_LABELS: Record<string, string> = {
@@ -49,11 +45,15 @@ function formatDate(dateStr: string | null): string {
   });
 }
 
-function fillTemplate(template: string, player: Player, context: { rival: string; fecha: string; formacion: string }): string {
+function buildPlantel(players: Player[]): string {
+  return players
+    .map((p) => `#${p.dorsal ?? '?'} ${p.name} (${p.slotPosition})`)
+    .join('\n');
+}
+
+function fillTemplate(template: string, plantel: string, context: { rival: string; fecha: string; formacion: string }): string {
   return template
-    .replace(/\{nombre\}/g, player.name)
-    .replace(/\{dorsal\}/g, player.dorsal?.toString() ?? '?')
-    .replace(/\{posicion\}/g, player.slotPosition)
+    .replace(/\{plantel\}/g, plantel)
     .replace(/\{rival\}/g, context.rival)
     .replace(/\{fecha\}/g, context.fecha)
     .replace(/\{formacion\}/g, context.formacion);
@@ -62,14 +62,13 @@ function fillTemplate(template: string, player: Player, context: { rival: string
 export function CitacionModal({
   isOpen,
   onClose,
-  formationName: _formationName,
   opponent,
   matchDate,
   formationType,
   players,
 }: CitacionModalProps) {
   const [template, setTemplate] = useState(DEFAULT_TEMPLATE);
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const context = useMemo(() => ({
     rival: opponent ?? 'A confirmar',
@@ -77,41 +76,31 @@ export function CitacionModal({
     formacion: (formationType && FORMATION_LABELS[formationType]) ?? formationType ?? 'Personalizado',
   }), [opponent, matchDate, formationType]);
 
-  const previews = useMemo(
-    () => players.map((p) => fillTemplate(template, p, context)),
-    [players, template, context],
+  const plantel = useMemo(() => buildPlantel(players), [players]);
+
+  const message = useMemo(
+    () => fillTemplate(template, plantel, context),
+    [template, plantel, context],
   );
 
   const insertVar = useCallback((varKey: string) => {
     setTemplate((prev) => prev + varKey);
   }, []);
 
-  const copyOne = useCallback(async (text: string, index: number) => {
+  const copyMessage = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
-    } catch {
-      // Fallback: select text
-    }
-  }, []);
-
-  const copyAll = useCallback(async () => {
-    const separator = '\n\n---\n\n';
-    const full = previews.join(separator);
-    try {
-      await navigator.clipboard.writeText(full);
-      setCopiedIndex(-1);
-      setTimeout(() => setCopiedIndex(null), 2000);
+      await navigator.clipboard.writeText(message);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback
     }
-  }, [previews]);
+  }, [message]);
 
-  const shareWhatsApp = useCallback((text: string) => {
-    const encoded = encodeURIComponent(text);
+  const shareWhatsApp = useCallback(() => {
+    const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encoded}`, '_blank');
-  }, []);
+  }, [message]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Generar Citación">
@@ -119,7 +108,7 @@ export function CitacionModal({
         {/* Template editor */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mensaje personalizado
+            Mensaje para el grupo
           </label>
           <textarea
             value={template}
@@ -142,51 +131,31 @@ export function CitacionModal({
           </div>
         </div>
 
-        {/* Previews */}
+        {/* Preview */}
         <div className="border-t border-gray-200 pt-3">
           <div className="flex items-center justify-between mb-2">
             <h4 className="text-sm font-semibold text-gray-700">
               Vista previa ({players.length} jugadores)
             </h4>
-            <button
-              onClick={copyAll}
-              className="px-3 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              {copiedIndex === -1 ? '✓ Copiado' : 'Copiar todos'}
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={copyMessage}
+                className="px-3 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                {copied ? '✓ Copiado' : 'Copiar mensaje'}
+              </button>
+              <button
+                onClick={shareWhatsApp}
+                className="px-3 py-1 text-xs bg-green-50 text-green-600 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+              >
+                WhatsApp
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {players.map((player, i) => (
-              <div
-                key={`${player.slotPosition}-${player.name}`}
-                className="border border-gray-200 rounded-lg p-3"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-800">
-                    #{player.dorsal ?? '?'} {player.name}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => copyOne(previews[i], i)}
-                      className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
-                    >
-                      {copiedIndex === i ? '✓ Copiado' : 'Copiar'}
-                    </button>
-                    <button
-                      onClick={() => shareWhatsApp(previews[i])}
-                      className="px-2 py-1 text-xs bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors"
-                    >
-                      WhatsApp
-                    </button>
-                  </div>
-                </div>
-                <pre className="text-xs text-gray-600 whitespace-pre-wrap font-sans bg-gray-50 rounded p-2">
-                  {previews[i]}
-                </pre>
-              </div>
-            ))}
-          </div>
+          <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans bg-gray-50 border border-gray-200 rounded-lg p-4">
+            {message}
+          </pre>
         </div>
       </div>
     </Modal>

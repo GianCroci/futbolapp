@@ -550,7 +550,6 @@ export function FormationViewPage() {
       <CitacionModal
         isOpen={isCitacionOpen}
         onClose={() => setIsCitacionOpen(false)}
-        formationName={currentFormation.name}
         opponent={currentFormation.opponent ?? null}
         matchDate={currentFormation.matchDate ?? null}
         formationType={currentFormation.formationType}
