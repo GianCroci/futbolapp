@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
@@ -6,6 +6,7 @@ import { useFormationStore, SlotAssignment } from '../store/formationStore';
 import { useMatchEventStore } from '../store/matchEventStore';
 import { useSubstitutionStore } from '../store/substitutionStore';
 import { getPresetPositions } from '../utils/formationPresets';
+import { exportFormationPdf } from '../utils/pdfExport';
 import { EventForm } from '../components/match/EventForm';
 import { EventList } from '../components/match/EventList';
 import { SubstitutionModal } from '../components/match/SubstitutionModal';
@@ -26,6 +27,8 @@ export function FormationViewPage() {
   const [commentsText, setCommentsText] = useState('');
   const [isEditingComments, setIsEditingComments] = useState(false);
   const [isSavingComments, setIsSavingComments] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const pitchRef = useRef<HTMLDivElement>(null);
 
   const [slots, setSlots] = useState<SlotAssignment[]>([]);
 
@@ -133,6 +136,24 @@ export function FormationViewPage() {
       console.error('Error updating metadata:', err);
     }
   };
+
+  const handleExportPdf = useCallback(async () => {
+    if (!currentFormation || isExporting) return;
+    setIsExporting(true);
+    try {
+      await exportFormationPdf(
+        currentFormation,
+        events,
+        substitutions,
+        playerNames,
+        pitchRef.current,
+      );
+    } catch (err) {
+      console.error('Error exporting PDF:', err);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [currentFormation, events, substitutions, playerNames, isExporting]);
 
   if (isLoading) {
     return (
@@ -260,21 +281,33 @@ export function FormationViewPage() {
               </div>
             )}
           </div>
-          <button
-            onClick={() => navigate(`/teams/${teamId}/formations/edit/${formationId}`)}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            Editar
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportPdf}
+              disabled={isExporting}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {isExporting ? 'Exportando...' : 'Exportar PDF'}
+            </button>
+            <button
+              onClick={() => navigate(`/teams/${teamId}/formations/edit/${formationId}`)}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Editar
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Pitch view */}
       <div className="flex justify-center">
-        <div className="relative w-full max-w-2xl aspect-[3/4] rounded-xl overflow-hidden shadow-inner">
+        <div ref={pitchRef} className="relative w-full max-w-2xl aspect-[3/4] rounded-xl overflow-hidden shadow-inner">
           <div className="absolute inset-0 bg-gradient-to-b from-green-600 via-green-500 to-green-700">
             <div className="absolute inset-[8%] border-2 border-white/30 rounded-lg" />
             <div className="absolute top-[50%] left-[8%] right-[8%] border-t-2 border-white/30" />
