@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
-import { StatsKPIs } from '../components/stats/StatsKPIs';
 import { StatsCharts } from '../components/stats/StatsCharts';
 import { StatsTable } from '../components/stats/StatsTable';
 import { useStatsStore } from '../store/statsStore';
@@ -82,10 +81,7 @@ export function StatsPage() {
         </div>
       ) : (
         <div>
-          {/* KPI Cards */}
-          <StatsKPIs stats={stats} />
-
-          {/* Charts */}
+          {/* Charts row: 33% each */}
           <StatsCharts stats={stats} />
 
           {/* Detailed Table */}
