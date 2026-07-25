@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { StatsKPIs } from '../components/stats/StatsKPIs';
+import { StatsCharts } from '../components/stats/StatsCharts';
 import { StatsTable } from '../components/stats/StatsTable';
 import { useStatsStore } from '../store/statsStore';
 
@@ -79,8 +81,20 @@ export function StatsPage() {
           <p className="text-gray-500 text-sm">{error}</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <StatsTable stats={stats} />
+        <div>
+          {/* KPI Cards */}
+          <StatsKPIs stats={stats} />
+
+          {/* Charts */}
+          <StatsCharts stats={stats} />
+
+          {/* Detailed Table */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-700">Detalle por jugador</h3>
+            </div>
+            <StatsTable stats={stats} />
+          </div>
         </div>
       )}
     </AppLayout>
