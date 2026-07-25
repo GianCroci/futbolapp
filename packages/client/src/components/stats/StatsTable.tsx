@@ -24,6 +24,7 @@ const COLUMNS: Column[] = [
   { key: 'yellowCards', label: '🟨', align: 'right' },
   { key: 'redCards', label: '🟥', align: 'right' },
   { key: 'appearances', label: 'Partidos', align: 'right' },
+  { key: 'avgRating', label: '⭐', align: 'right' },
 ];
 
 export function StatsTable({ stats }: StatsTableProps) {
@@ -118,6 +119,9 @@ export function StatsTable({ stats }: StatsTableProps) {
               <td className="px-3 py-2.5 text-right font-mono text-yellow-600">{stat.yellowCards}</td>
               <td className="px-3 py-2.5 text-right font-mono text-red-600">{stat.redCards}</td>
               <td className="px-3 py-2.5 text-right font-mono">{stat.appearances}</td>
+              <td className="px-3 py-2.5 text-right font-mono font-semibold text-green-700">
+                {stat.avgRating != null ? stat.avgRating.toFixed(1) : '—'}
+              </td>
             </tr>
           ))}
         </tbody>

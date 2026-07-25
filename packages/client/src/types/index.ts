@@ -49,6 +49,7 @@ export interface FormationPlayer {
   isSubstitute?: boolean;
   subInMinute?: number | null;
   subOutMinute?: number | null;
+  rating?: number | null;
 }
 
 // Match Event Types
@@ -75,6 +76,7 @@ export interface PlayerStat {
   yellowCards: number;
   redCards: number;
   appearances: number;
+  avgRating: number | null;
 }
 
 // Substitution

@@ -13,6 +13,7 @@ export interface PlayerStat {
   redCards: number;
   appearances: number;
   totalMinutes: number;
+  avgRating: number | null;
 }
 
 export async function getTeamStats(
@@ -60,6 +61,7 @@ export async function getTeamStats(
       redCards: number;
       appearances: number;
       totalMinutes: number;
+      ratings: number[];
     }
   >();
 
@@ -84,6 +86,7 @@ export async function getTeamStats(
         redCards: 0,
         appearances: 0,
         totalMinutes: 0,
+        ratings: [],
       };
 
       let minutes = 0;
@@ -102,6 +105,11 @@ export async function getTeamStats(
       if (minutes > 0) {
         existing.appearances++;
         existing.totalMinutes += minutes;
+      }
+
+      // Track rating if present
+      if (fp.rating !== null && fp.rating !== undefined) {
+        existing.ratings.push(fp.rating);
       }
 
       statsMap.set(fp.playerId, existing);
@@ -132,6 +140,17 @@ export async function getTeamStats(
 
   return Array.from(statsMap.entries()).map(([playerId, stats]) => ({
     playerId,
-    ...stats,
+    playerName: stats.playerName,
+    position: stats.position,
+    dorsal: stats.dorsal,
+    goals: stats.goals,
+    assists: stats.assists,
+    yellowCards: stats.yellowCards,
+    redCards: stats.redCards,
+    appearances: stats.appearances,
+    totalMinutes: stats.totalMinutes,
+    avgRating: stats.ratings.length > 0
+      ? Math.round((stats.ratings.reduce((a, b) => a + b, 0) / stats.ratings.length) * 10) / 10
+      : null,
   }));
 }

@@ -13,7 +13,7 @@ import { SubstitutionModal } from '../components/match/SubstitutionModal';
 export function FormationViewPage() {
   const { teamId, formationId } = useParams<{ teamId: string; formationId: string }>();
   const navigate = useNavigate();
-  const { currentFormation, isLoading, fetchFormation } = useFormationStore();
+  const { currentFormation, isLoading, fetchFormation, updatePlayerRating } = useFormationStore();
   const { events, fetchEvents } = useMatchEventStore();
   const { substitutions, fetchSubstitutions, deleteSubstitution } = useSubstitutionStore();
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
@@ -310,22 +310,47 @@ export function FormationViewPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {slots
             .filter((s) => s.playerId)
-            .map((slot) => (
-              <div
-                key={slot.slotPosition}
-                className="flex items-center gap-3 px-3 py-2 bg-white rounded-lg border border-gray-200"
-              >
-                <span className="w-8 h-8 rounded-full bg-green-100 text-green-800 flex items-center justify-center text-sm font-bold font-mono">
-                  {slot.playerDorsal ?? '?'}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">
-                    {slot.playerName || slot.slotPosition}
-                  </p>
-                  <p className="text-xs text-gray-400">{slot.slotPosition}</p>
+            .map((slot) => {
+              const fp = currentFormation.players.find(
+                (p) => p.playerId === slot.playerId && p.slotPosition === slot.slotPosition
+              );
+              const rating = fp?.rating;
+              return (
+                <div
+                  key={slot.slotPosition}
+                  className="flex items-center gap-3 px-3 py-2 bg-white rounded-lg border border-gray-200"
+                >
+                  <span className="w-8 h-8 rounded-full bg-green-100 text-green-800 flex items-center justify-center text-sm font-bold font-mono">
+                    {slot.playerDorsal ?? '?'}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">
+                      {slot.playerName || slot.slotPosition}
+                    </p>
+                    <p className="text-xs text-gray-400">{slot.slotPosition}</p>
+                  </div>
+                  {/* Rating selector */}
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => {
+                          if (!teamId || !formationId || !slot.playerId) return;
+                          updatePlayerRating(teamId, formationId, slot.playerId, n === rating ? null : n);
+                        }}
+                        className={`w-5 h-5 rounded text-[10px] font-medium transition-colors ${
+                          n === rating
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
         </div>
       </div>
 

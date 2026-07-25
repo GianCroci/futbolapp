@@ -114,6 +114,7 @@ model FormationPlayer {
   isSubstitute  Boolean   @default(false)
   subInMinute   Int?
   subOutMinute  Int?
+  rating        Int?
 
   @@unique([formationId, playerId])
   @@index([formationId])

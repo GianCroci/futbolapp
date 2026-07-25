@@ -6,6 +6,7 @@ import {
   createFormation,
   updateFormation,
   deleteFormation,
+  updatePlayerRating,
 } from '../services/formation.service';
 import { FormationType } from '@prisma/client';
 
@@ -209,6 +210,32 @@ router.delete('/:formationId', async (req: Request, res: Response, next: NextFun
     }
 
     res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH /api/teams/:teamId/formations/:formationId/players/:playerId/rating — update player rating
+router.patch('/:formationId/players/:playerId/rating', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authReq = req as AuthRequest;
+    const teamId = req.params.teamId as string;
+    const formationId = req.params.formationId as string;
+    const playerId = req.params.playerId as string;
+    const { rating } = req.body;
+
+    if (rating !== null && (typeof rating !== 'number' || rating < 1 || rating > 10 || !Number.isInteger(rating))) {
+      res.status(400).json({ error: 'El puntaje debe ser un número entero entre 1 y 10, o null para eliminar' });
+      return;
+    }
+
+    const updated = await updatePlayerRating(teamId, formationId, playerId, authReq.user!.userId, rating);
+    if (!updated) {
+      res.status(404).json({ error: 'Formación o jugador no encontrado' });
+      return;
+    }
+
+    res.json(updated);
   } catch (error) {
     next(error);
   }
