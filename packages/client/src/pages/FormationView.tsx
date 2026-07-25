@@ -552,11 +552,10 @@ export function FormationViewPage() {
         onClose={() => setIsCitacionOpen(false)}
         opponent={currentFormation.opponent ?? null}
         matchDate={currentFormation.matchDate ?? null}
-        formationType={currentFormation.formationType}
-        players={starters.map((fp) => ({
+        players={currentFormation.players.map((fp) => ({
           name: (fp.player as { name: string } | undefined)?.name ?? fp.playerId,
           dorsal: (fp.player as { dorsal: number | null } | undefined)?.dorsal ?? null,
-          slotPosition: fp.slotPosition,
+          slotPosition: fp.isSubstitute ? `${fp.slotPosition} (suplente)` : fp.slotPosition,
         }))}
       />
     </AppLayout>

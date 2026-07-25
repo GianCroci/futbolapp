@@ -12,31 +12,24 @@ interface CitacionModalProps {
   onClose: () => void;
   opponent: string | null;
   matchDate: string | null;
-  formationType: string | null;
   players: Player[];
 }
 
-const DEFAULT_TEMPLATE = `⚽ *Citación - {formacion}*
+const DEFAULT_TEMPLATE = `⚽ *Jugadores convocados*
 
 🆚 Rival: {rival}
 📅 Fecha: {fecha}
 
-📋 *Plantel convocado:*
+📋 *Plantel:*
 {plantel}
 
 ¡A prepararse que viene el partido! 💪`;
 
 const AVAILABLE_VARS = [
-  { key: '{formacion}', desc: 'Tipo de formación (4-3-3, etc.)' },
   { key: '{rival}', desc: 'Rival' },
   { key: '{fecha}', desc: 'Fecha del partido' },
   { key: '{plantel}', desc: 'Lista de jugadores con dorsal y posición' },
 ];
-
-const FORMATION_LABELS: Record<string, string> = {
-  F_4_4_2: '4-4-2', F_4_3_3: '4-3-3', F_3_5_2: '3-5-2',
-  F_4_2_3_1: '4-2-3-1', F_5_3_2: '5-3-2', F_4_1_4_1: '4-1-4-1', F_3_4_3: '3-4-3',
-};
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return 'A confirmar';
@@ -51,12 +44,11 @@ function buildPlantel(players: Player[]): string {
     .join('\n');
 }
 
-function fillTemplate(template: string, plantel: string, context: { rival: string; fecha: string; formacion: string }): string {
+function fillTemplate(template: string, plantel: string, context: { rival: string; fecha: string }): string {
   return template
     .replace(/\{plantel\}/g, plantel)
     .replace(/\{rival\}/g, context.rival)
-    .replace(/\{fecha\}/g, context.fecha)
-    .replace(/\{formacion\}/g, context.formacion);
+    .replace(/\{fecha\}/g, context.fecha);
 }
 
 export function CitacionModal({
@@ -64,7 +56,6 @@ export function CitacionModal({
   onClose,
   opponent,
   matchDate,
-  formationType,
   players,
 }: CitacionModalProps) {
   const [template, setTemplate] = useState(DEFAULT_TEMPLATE);
@@ -73,8 +64,7 @@ export function CitacionModal({
   const context = useMemo(() => ({
     rival: opponent ?? 'A confirmar',
     fecha: formatDate(matchDate),
-    formacion: (formationType && FORMATION_LABELS[formationType]) ?? formationType ?? 'Personalizado',
-  }), [opponent, matchDate, formationType]);
+  }), [opponent, matchDate]);
 
   const plantel = useMemo(() => buildPlantel(players), [players]);
 
