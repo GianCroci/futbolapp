@@ -78,6 +78,11 @@ export function FormationViewPage() {
     return map;
   }, [currentFormation]);
 
+  const enteredPlayerIds = useMemo(
+    () => new Set(substitutions.map((s) => s.playerInId)),
+    [substitutions],
+  );
+
   const starters = useMemo(
     () => currentFormation?.players.filter((fp) => !fp.isSubstitute) ?? [],
     [currentFormation]
@@ -356,12 +361,17 @@ export function FormationViewPage() {
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Jugadores</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {currentFormation.players
-            .filter((fp) => fp.player && (!fp.isSubstitute || fp.subInMinute != null))
+            .filter((fp) => {
+              if (!fp.player) return false;
+              if (!fp.isSubstitute) return true;
+              return enteredPlayerIds.has(fp.playerId);
+            })
             .map((fp) => {
               const playerName = (fp.player as { name: string })?.name ?? fp.playerId;
               const dorsal = (fp.player as { dorsal: number | null })?.dorsal;
               const rating = fp.rating;
-              const didPlay = !fp.isSubstitute || (fp.subInMinute != null);
+              const enteredSub = substitutions.find((s) => s.playerInId === fp.playerId);
+              const didPlay = !fp.isSubstitute || !!enteredSub;
               return (
                 <div
                   key={fp.id}
@@ -374,9 +384,9 @@ export function FormationViewPage() {
                     <span className="text-sm font-medium text-gray-800 truncate">
                       {playerName}
                     </span>
-                    {fp.isSubstitute && (
+                    {fp.isSubstitute && enteredSub && (
                       <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                        {fp.subInMinute != null ? `Ing. min ${fp.subInMinute}` : 'Suplente'}
+                        Ing. min {enteredSub.minute}
                       </span>
                     )}
                   </div>
