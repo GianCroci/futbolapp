@@ -356,7 +356,7 @@ export function FormationViewPage() {
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Jugadores</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {currentFormation.players
-            .filter((fp) => fp.player)
+            .filter((fp) => fp.player && (!fp.isSubstitute || fp.subInMinute != null))
             .map((fp) => {
               const playerName = (fp.player as { name: string })?.name ?? fp.playerId;
               const dorsal = (fp.player as { dorsal: number | null })?.dorsal;
