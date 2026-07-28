@@ -353,48 +353,55 @@ export function FormationViewPage() {
 
       {/* Players list */}
       <div className="mt-8 max-w-2xl mx-auto">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Jugadores titulares</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Jugadores</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {slots
-            .filter((s) => s.playerId)
-            .map((slot) => {
-              const fp = currentFormation.players.find(
-                (p) => p.playerId === slot.playerId && p.slotPosition === slot.slotPosition
-              );
-              const rating = fp?.rating;
+          {currentFormation.players
+            .filter((fp) => fp.player)
+            .map((fp) => {
+              const playerName = (fp.player as { name: string })?.name ?? fp.playerId;
+              const dorsal = (fp.player as { dorsal: number | null })?.dorsal;
+              const rating = fp.rating;
+              const didPlay = !fp.isSubstitute || (fp.subInMinute != null);
               return (
                 <div
-                  key={slot.slotPosition}
-                  className="flex items-center gap-3 px-3 py-2 bg-white rounded-lg border border-gray-200"
+                  key={fp.id}
+                  className={`px-3 py-2 bg-white rounded-lg border ${didPlay ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}
                 >
-                  <span className="w-8 h-8 rounded-full bg-green-100 text-green-800 flex items-center justify-center text-sm font-bold font-mono">
-                    {slot.playerDorsal ?? '?'}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">
-                      {slot.playerName || slot.slotPosition}
-                    </p>
-                    <p className="text-xs text-gray-400">{slot.slotPosition}</p>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="w-7 h-7 rounded-full bg-green-100 text-green-800 flex items-center justify-center text-sm font-bold font-mono">
+                      {dorsal ?? '?'}
+                    </span>
+                    <span className="text-sm font-medium text-gray-800 truncate">
+                      {playerName}
+                    </span>
+                    {fp.isSubstitute && (
+                      <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                        {fp.subInMinute != null ? `Ing. min ${fp.subInMinute}` : 'Suplente'}
+                      </span>
+                    )}
                   </div>
-                  {/* Rating selector */}
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                      <button
-                        key={n}
-                        onClick={() => {
-                          if (!teamId || !formationId || !slot.playerId) return;
-                          updatePlayerRating(teamId, formationId, slot.playerId, n === rating ? null : n);
-                        }}
-                        className={`w-5 h-5 rounded text-[10px] font-medium transition-colors ${
-                          n === rating
-                            ? 'bg-green-600 text-white'
-                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                        }`}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
+                  {didPlay ? (
+                    <div className="flex items-center gap-1 pl-9">
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                        <button
+                          key={n}
+                          onClick={() => {
+                            if (!teamId || !formationId) return;
+                            updatePlayerRating(teamId, formationId, fp.playerId, n === rating ? null : n);
+                          }}
+                          className={`w-5 h-5 rounded text-[10px] font-medium transition-colors ${
+                            n === rating
+                              ? 'bg-green-600 text-white'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-gray-400 pl-9">No ingresó al partido</p>
+                  )}
                 </div>
               );
             })}
