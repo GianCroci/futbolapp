@@ -552,7 +552,7 @@ export function FormationViewPage() {
         onClose={() => setIsEventFormOpen(false)}
         teamId={teamId!}
         formationId={formationId!}
-        players={currentFormation.players}
+        players={currentFormation.players.filter((fp) => !fp.isSubstitute || enteredPlayerIds.has(fp.playerId))}
       />
 
       <SubstitutionModal
