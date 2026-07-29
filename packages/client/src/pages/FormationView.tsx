@@ -126,7 +126,7 @@ export function FormationViewPage() {
   const saveMetadata = async () => {
     if (!teamId || !formationId) return;
     try {
-      await api.put(`/teams/${teamId}/formations/${formationId}`, {
+      await api.patch(`/teams/${teamId}/formations/${formationId}`, {
         opponent: editOpponent || null,
         scoreHome: editScoreHome ? parseInt(editScoreHome, 10) : null,
         scoreAway: editScoreAway ? parseInt(editScoreAway, 10) : null,
