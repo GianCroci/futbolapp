@@ -52,16 +52,34 @@ model User {
 }
 
 model Team {
-  id         String      @id @default(uuid())
-  name       String
-  userId     String
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  players    Player[]
-  formations Formation[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id            String          @id @default(uuid())
+  name          String
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  players       Player[]
+  formations    Formation[]
+  fixtureImage  String?
+  fixtureEntries FixtureEntry[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   @@index([userId])
+}
+
+model FixtureEntry {
+  id        String   @id @default(uuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  matchDay  Int?
+  date      String?
+  opponent  String
+  location  String?
+  scoreHome Int?
+  scoreAway Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([teamId])
 }
 
 model Player {

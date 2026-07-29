@@ -91,3 +91,22 @@ export interface Substitution {
   playerOut?: Player;
   playerIn?: Player;
 }
+
+// Fixture
+export interface FixtureEntry {
+  id: string;
+  teamId: string;
+  matchDay: number | null;
+  date: string | null;
+  opponent: string;
+  location: string | null;
+  scoreHome: number | null;
+  scoreAway: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FixtureData {
+  entries: FixtureEntry[];
+  fixtureImage: string | null;
+}

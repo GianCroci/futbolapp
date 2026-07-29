@@ -8,15 +8,17 @@ import { useTeamStore } from '../store/teamStore';
 import { usePlayerStore } from '../store/playerStore';
 import { useFormationStore } from '../store/formationStore';
 import { useStatsStore } from '../store/statsStore';
+import { useFixtureStore } from '../store/fixtureStore';
 import { PlayerTable } from '../components/players/PlayerTable';
 import { PlayerForm } from '../components/players/PlayerForm';
 import { PlayerFilter } from '../components/players/PlayerFilter';
 import { StatsTable } from '../components/stats/StatsTable';
 import { StatsCharts } from '../components/stats/StatsCharts';
+import { FixtureTab } from '../components/fixture/FixtureTab';
 import { Player, Formation } from '../types';
 import { getPresetPositions } from '../utils/formationPresets';
 
-type Tab = 'players' | 'formations' | 'stats';
+type Tab = 'players' | 'formations' | 'stats' | 'fixtures';
 
 export function TeamDetailPage() {
   const { teamId } = useParams<{ teamId: string }>();
@@ -25,6 +27,7 @@ export function TeamDetailPage() {
   const { players, isLoading: playersLoading, fetchPlayers, createPlayer, updatePlayer, deletePlayer } = usePlayerStore();
   const { formations, isLoading: formationsLoading, fetchFormations, deleteFormation } = useFormationStore();
   const { stats, isLoading: statsLoading, fetchStats } = useStatsStore();
+  const { fetchFixtures } = useFixtureStore();
 
   // Team state
   const [isEditing, setIsEditing] = useState(false);
@@ -74,6 +77,10 @@ export function TeamDetailPage() {
   useEffect(() => {
     if (teamId && activeTab === 'stats') fetchStats(teamId, statsFrom || undefined, statsTo || undefined);
   }, [teamId, activeTab, statsFrom, statsTo, fetchStats]);
+
+  useEffect(() => {
+    if (teamId && activeTab === 'fixtures') fetchFixtures(teamId);
+  }, [teamId, activeTab, fetchFixtures]);
 
   // Team handlers
   const handleEditTeam = async (name: string) => {
@@ -240,6 +247,16 @@ export function TeamDetailPage() {
             }`}
           >
             📊 Estadísticas
+          </button>
+          <button
+            onClick={() => setActiveTab('fixtures')}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'fixtures'
+                ? 'border-green-600 text-green-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            📅 Fixture
           </button>
         </div>
       </div>
@@ -422,6 +439,11 @@ export function TeamDetailPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Fixtures Tab */}
+      {activeTab === 'fixtures' && teamId && (
+        <FixtureTab teamId={teamId} />
       )}
 
       {/* Edit Team Form */}

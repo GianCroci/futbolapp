@@ -8,6 +8,7 @@ import formationRoutes from './routes/formations';
 import matchEventRoutes from './routes/matchEvents';
 import substitutionRoutes from './routes/substitutions';
 import statsRoutes from './routes/stats';
+import fixtureRoutes from './routes/fixtures';
 import { errorHandler, notFoundHandler } from './middleware/error';
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/teams/:teamId/formations', formationRoutes);
 app.use('/api/teams/:teamId/formations/:formationId/events', matchEventRoutes);
 app.use('/api/teams/:teamId/formations/:formationId/substitutions', substitutionRoutes);
 app.use('/api/teams/:teamId/stats', statsRoutes);
+app.use('/api/teams/:teamId/fixtures', fixtureRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
