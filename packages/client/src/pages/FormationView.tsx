@@ -347,9 +347,11 @@ export function FormationViewPage() {
                     {slot.playerDorsal}
                   </span>
                 )}
-                <span className="text-sm font-bold leading-tight truncate max-w-[72px] text-center">
-                  {slot.playerName || ''}
-                </span>
+                <div className="text-sm font-bold leading-tight text-center px-1">
+                  {(slot.playerName || '').split(' ').map((part, i) => (
+                    <span key={i} className="block">{part}</span>
+                  ))}
+                </div>
               </div>
             </div>
           ))}
