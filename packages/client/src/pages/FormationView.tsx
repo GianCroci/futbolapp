@@ -5,6 +5,7 @@ import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { useFormationStore, SlotAssignment } from '../store/formationStore';
 import { useMatchEventStore } from '../store/matchEventStore';
 import { useSubstitutionStore } from '../store/substitutionStore';
+import api from '../services/api';
 import { getPresetPositions } from '../utils/formationPresets';
 import { exportFormationPdf } from '../utils/pdfExport';
 import { EventForm } from '../components/match/EventForm';
@@ -125,20 +126,14 @@ export function FormationViewPage() {
   const saveMetadata = async () => {
     if (!teamId || !formationId) return;
     try {
-      const response = await fetch(`/api/teams/${teamId}/formations/${formationId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          opponent: editOpponent || null,
-          scoreHome: editScoreHome ? parseInt(editScoreHome, 10) : null,
-          scoreAway: editScoreAway ? parseInt(editScoreAway, 10) : null,
-          matchDate: editMatchDate || null,
-        }),
+      await api.put(`/teams/${teamId}/formations/${formationId}`, {
+        opponent: editOpponent || null,
+        scoreHome: editScoreHome ? parseInt(editScoreHome, 10) : null,
+        scoreAway: editScoreAway ? parseInt(editScoreAway, 10) : null,
+        matchDate: editMatchDate || null,
       });
-      if (response.ok) {
-        fetchFormation(teamId, formationId);
-        setIsEditingMetadata(false);
-      }
+      fetchFormation(teamId, formationId);
+      setIsEditingMetadata(false);
     } catch (err) {
       console.error('Error updating metadata:', err);
     }
