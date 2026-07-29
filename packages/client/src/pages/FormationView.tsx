@@ -341,14 +341,14 @@ export function FormationViewPage() {
               className="absolute transform -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${slot.positionX}%`, top: `${slot.positionY}%` }}
             >
-              <div className="w-14 h-14 rounded-full flex flex-col items-center justify-center border-2 border-white bg-green-700/90 text-white shadow-md">
+              <div className="w-20 h-20 rounded-full flex flex-col items-center justify-center border-2 border-white bg-green-700/90 text-white shadow-md">
                 {slot.playerDorsal && (
-                  <span className="text-[10px] leading-none font-mono opacity-80">
+                  <span className="text-xs leading-none font-mono opacity-80">
                     {slot.playerDorsal}
                   </span>
                 )}
-                <span className="text-xs font-bold leading-tight truncate max-w-[52px]">
-                  {slot.playerName?.split(' ').pop() || ''}
+                <span className="text-sm font-bold leading-tight truncate max-w-[72px] text-center">
+                  {slot.playerName || ''}
                 </span>
               </div>
             </div>
