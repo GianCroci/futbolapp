@@ -9,6 +9,7 @@ import {
   Pencil,
   Plus,
   Shirt,
+  Sparkles,
   Trash2,
   Users,
 } from 'lucide-react';
@@ -28,10 +29,11 @@ import { StatsTable } from '../components/stats/StatsTable';
 import { StatsCharts } from '../components/stats/StatsCharts';
 import { FixtureTab } from '../components/fixture/FixtureTab';
 import { InjuryTab } from '../components/injuries/InjuryTab';
+import { InsightsTab } from '../components/insights/InsightsTab';
 import { Player, Formation } from '../types';
 import { getPresetPositions } from '../utils/formationPresets';
 
-type Tab = 'players' | 'formations' | 'stats' | 'fixtures' | 'injuries';
+type Tab = 'players' | 'formations' | 'stats' | 'fixtures' | 'injuries' | 'insights';
 
 export function TeamDetailPage() {
   const { teamId } = useParams<{ teamId: string }>();
@@ -286,6 +288,17 @@ export function TeamDetailPage() {
             <HeartPulse className="w-4 h-4" />
             Lesiones
           </button>
+          <button
+            onClick={() => setActiveTab('insights')}
+            className={`flex items-center gap-1.5 shrink-0 pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'insights'
+                ? 'border-green-600 text-green-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            Análisis con IA
+          </button>
         </div>
       </div>
 
@@ -473,6 +486,11 @@ export function TeamDetailPage() {
       {/* Injuries Tab */}
       {activeTab === 'injuries' && (
         <InjuryTab teamId={currentTeam?.id ?? ''} />
+      )}
+
+      {/* Insights Tab */}
+      {activeTab === 'insights' && teamId && (
+        <InsightsTab teamId={teamId} />
       )}
 
       {/* Edit Team Form */}
