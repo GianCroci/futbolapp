@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { BarChart3 } from 'lucide-react';
 import { PlayerStat } from '../../types';
 
 interface StatsTableProps {
@@ -21,10 +22,10 @@ const COLUMNS: Column[] = [
   { key: 'totalMinutes', label: 'Minutos', align: 'right' },
   { key: 'goals', label: 'Goles', align: 'right' },
   { key: 'assists', label: 'Asistencias', align: 'right' },
-  { key: 'yellowCards', label: '🟨', align: 'right' },
-  { key: 'redCards', label: '🟥', align: 'right' },
+  { key: 'yellowCards', label: 'Amarillas', align: 'right' },
+  { key: 'redCards', label: 'Rojas', align: 'right' },
   { key: 'appearances', label: 'Partidos', align: 'right' },
-  { key: 'avgRating', label: '⭐', align: 'right' },
+  { key: 'avgRating', label: 'Rating', align: 'right' },
 ];
 
 export function StatsTable({ stats }: StatsTableProps) {
@@ -79,7 +80,7 @@ export function StatsTable({ stats }: StatsTableProps) {
   if (stats.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="text-6xl mb-4">📊</div>
+        <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
         <h3 className="text-xl font-semibold text-gray-700 mb-2">Sin datos</h3>
         <p className="text-gray-500">No hay estadísticas disponibles para este equipo.</p>
       </div>
@@ -95,7 +96,7 @@ export function StatsTable({ stats }: StatsTableProps) {
               <th
                 key={col.key}
                 onClick={() => handleSort(col.key)}
-                className={`px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 transition-colors select-none ${
+                className={`px-3 py-3 text-xs uppercase tracking-wide text-gray-500 cursor-pointer hover:text-gray-700 transition-colors select-none ${
                   col.align === 'right' ? 'text-right' : 'text-left'
                 }`}
               >
@@ -115,7 +116,7 @@ export function StatsTable({ stats }: StatsTableProps) {
               <td className="px-3 py-2.5 text-right font-mono text-gray-600">{stat.dorsal ?? '—'}</td>
               <td className="px-3 py-2.5 text-right font-mono">{stat.totalMinutes}</td>
               <td className="px-3 py-2.5 text-right font-mono font-semibold text-green-700">{stat.goals}</td>
-              <td className="px-3 py-2.5 text-right font-mono text-blue-700">{stat.assists}</td>
+              <td className="px-3 py-2.5 text-right font-mono text-green-700">{stat.assists}</td>
               <td className="px-3 py-2.5 text-right font-mono text-yellow-600">{stat.yellowCards}</td>
               <td className="px-3 py-2.5 text-right font-mono text-red-600">{stat.redCards}</td>
               <td className="px-3 py-2.5 text-right font-mono">{stat.appearances}</td>

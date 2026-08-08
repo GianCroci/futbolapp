@@ -9,7 +9,7 @@ interface FootballPitchProps {
 
 export function FootballPitch({ slots, selectedSlot, onSlotClick, children }: FootballPitchProps) {
   return (
-    <div className="relative w-full aspect-[3/4] md:aspect-[2/3] max-h-[600px] rounded-xl overflow-hidden shadow-inner">
+    <div className="relative w-full aspect-[3/4] md:aspect-[2/3] max-h-[600px] rounded-xl overflow-hidden shadow-inner select-none">
       {/* Field background */}
       <div className="absolute inset-0 bg-gradient-to-b from-green-600 via-green-500 to-green-700">
         {/* Field markings */}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus, Shield } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
@@ -48,19 +49,22 @@ export function DashboardPage() {
   return (
     <AppLayout>
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">
-            Bienvenido, {user?.name || 'Invitado'}
-          </h2>
-          <p className="text-gray-500 mt-1">Gestioná tus equipos y formaciones</p>
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0">
+            <Shield className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Bienvenido, {user?.name || 'Invitado'}
+            </h2>
+            <p className="text-gray-500 mt-1">Gestioná tus equipos y formaciones</p>
+          </div>
         </div>
         <button
           onClick={() => setIsFormOpen(true)}
-          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors font-medium"
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg transition-colors font-medium"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="w-5 h-5" />
           Nuevo equipo
         </button>
       </div>
@@ -77,12 +81,12 @@ export function DashboardPage() {
         </div>
       ) : teams.length === 0 ? (
         <EmptyState
-          icon="📋"
+          icon={<Shield className="w-9 h-9" />}
           title="Todavía no tenés equipos"
           message="Creá tu primer equipo para empezar a gestionar jugadores y formaciones."
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {teams.map((team) => (
             <TeamCard
               key={team.id}

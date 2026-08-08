@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
+import { Check, Pencil, Plus, Repeat, Trash2, X } from 'lucide-react';
 import { useFixtureStore } from '../../store/fixtureStore';
 import { FixtureEntry } from '../../types';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -26,11 +27,11 @@ export function FixtureTab({ teamId }: FixtureTabProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingEntry, setDeletingEntry] = useState<FixtureEntry | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isMirroring, setIsMirroring] = useState(false);
 
-  // Form state
-  const [formMatchDay, setFormMatchDay] = useState('');
-  const [formDate, setFormDate] = useState('');
+  // Form state — simplified
   const [formOpponent, setFormOpponent] = useState('');
+  const [formDate, setFormDate] = useState('');
   const [formLocation, setFormLocation] = useState('');
   const [formScoreHome, setFormScoreHome] = useState('');
   const [formScoreAway, setFormScoreAway] = useState('');
@@ -39,17 +40,20 @@ export function FixtureTab({ teamId }: FixtureTabProps) {
     fetchFixtures(teamId);
   }, [teamId, fetchFixtures]);
 
-  // Keep viewMode in sync when fixtureImage loads
   useEffect(() => {
     if (fixtureImage && viewMode === 'table') {
       setViewMode('image');
     }
   }, [fixtureImage]);
 
+  const maxMatchDay = useMemo(
+    () => Math.max(0, ...entries.map((e) => e.matchDay ?? 0)),
+    [entries],
+  );
+
   const resetForm = () => {
-    setFormMatchDay('');
-    setFormDate('');
     setFormOpponent('');
+    setFormDate('');
     setFormLocation('');
     setFormScoreHome('');
     setFormScoreAway('');
@@ -58,9 +62,8 @@ export function FixtureTab({ teamId }: FixtureTabProps) {
   };
 
   const startEdit = (entry: FixtureEntry) => {
-    setFormMatchDay(entry.matchDay?.toString() ?? '');
-    setFormDate(entry.date ?? '');
     setFormOpponent(entry.opponent);
+    setFormDate(entry.date ?? '');
     setFormLocation(entry.location ?? '');
     setFormScoreHome(entry.scoreHome?.toString() ?? '');
     setFormScoreAway(entry.scoreAway?.toString() ?? '');
@@ -72,8 +75,10 @@ export function FixtureTab({ teamId }: FixtureTabProps) {
     e.preventDefault();
     if (!formOpponent.trim()) return;
 
+    const existing = editingId ? entries.find((en) => en.id === editingId) : null;
+
     const data = {
-      matchDay: formMatchDay ? parseInt(formMatchDay, 10) : null,
+      matchDay: existing ? existing.matchDay : maxMatchDay + 1,
       date: formDate || null,
       opponent: formOpponent.trim(),
       location: formLocation || null,
@@ -90,6 +95,29 @@ export function FixtureTab({ teamId }: FixtureTabProps) {
       resetForm();
     } catch (err) {
       console.error('Error saving fixture entry:', err);
+    }
+  };
+
+  const handleMirror = async () => {
+    if (entries.length === 0) return;
+    setIsMirroring(true);
+    try {
+      const mirrored = entries.map((e) => ({
+        matchDay: (e.matchDay ?? maxMatchDay) + maxMatchDay,
+        date: null as string | null,
+        opponent: e.opponent,
+        location: e.location === 'LOCAL' ? 'VISITANTE' : e.location === 'VISITANTE' ? 'LOCAL' : e.location,
+        scoreHome: null as number | null,
+        scoreAway: null as number | null,
+      }));
+      for (const m of mirrored) {
+        await createEntry(teamId, m);
+      }
+      await fetchFixtures(teamId);
+    } catch (err) {
+      console.error('Error mirroring fixture:', err);
+    } finally {
+      setIsMirroring(false);
     }
   };
 
@@ -139,11 +167,7 @@ export function FixtureTab({ teamId }: FixtureTabProps) {
   const sortedEntries = [...entries].sort((a, b) => {
     const dayA = a.matchDay ?? Infinity;
     const dayB = b.matchDay ?? Infinity;
-    if (dayA !== dayB) return dayA - dayB;
-    if (a.date && b.date) return a.date.localeCompare(b.date);
-    if (a.date) return -1;
-    if (b.date) return 1;
-    return 0;
+    return dayA - dayB;
   });
 
   return (
@@ -153,7 +177,7 @@ export function FixtureTab({ teamId }: FixtureTabProps) {
         {fixtureImage && (
           <button
             onClick={() => setViewMode(viewMode === 'image' ? 'table' : 'image')}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2"
           >
             {viewMode === 'image' ? 'Ver como tabla' : 'Ver imagen'}
           </button>
@@ -171,7 +195,7 @@ export function FixtureTab({ teamId }: FixtureTabProps) {
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 cursor-pointer transition-colors">
+            <label className="px-3 py-1.5 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors">
               {isUploading ? 'Subiendo...' : 'Cambiar imagen'}
               <input
                 ref={fileInputRef}
@@ -213,138 +237,145 @@ export function FixtureTab({ teamId }: FixtureTabProps) {
             </div>
           )}
 
-          {/* Manual entries */}
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-700">Partidos del campeonato</h3>
-            {!isAdding && (
-              <button
-                onClick={() => {
-                  resetForm();
-                  setIsAdding(true);
-                }}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Agregar partido
-              </button>
-            )}
+          {/* Header + actions */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h3 className="text-sm font-semibold text-gray-700">
+              Partidos del campeonato
+            </h3>
+            <div className="flex items-center gap-2">
+              {sortedEntries.length > 0 && (
+                <button
+                  onClick={handleMirror}
+                  disabled={isMirroring}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  <Repeat className="w-4 h-4" />
+                  {isMirroring ? 'Espejando...' : 'Espejar fixture'}
+                </button>
+              )}
+              {!isAdding && (
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setIsAdding(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Agregar fecha
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Add/Edit form */}
-          {isAdding && (
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Jornada</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={formMatchDay}
-                    onChange={(e) => setFormMatchDay(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm"
-                    placeholder="Ej: 1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Fecha</label>
-                  <input
-                    type="date"
-                    value={formDate}
-                    onChange={(e) => setFormDate(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Localía</label>
-                  <select
-                    value={formLocation}
-                    onChange={(e) => setFormLocation(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm"
-                  >
-                    <option value="">Seleccionar...</option>
-                    <option value="LOCAL">Local</option>
-                    <option value="VISITANTE">Visitante</option>
-                    <option value="NEUTRAL">Neutral</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Rival *</label>
-                <input
-                  type="text"
-                  value={formOpponent}
-                  onChange={(e) => setFormOpponent(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm"
-                  placeholder="Nombre del equipo"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Goles a favor</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={formScoreHome}
-                    onChange={(e) => setFormScoreHome(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Goles en contra</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={formScoreAway}
-                    onChange={(e) => setFormScoreAway(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="submit"
-                  disabled={!formOpponent.trim()}
-                  className="px-4 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                >
-                  {editingId ? 'Guardar cambios' : 'Agregar partido'}
-                </button>
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-4 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Entries table */}
-          {sortedEntries.length > 0 ? (
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
-                    <th className="px-3 py-2 font-medium">#</th>
-                    <th className="px-3 py-2 font-medium">Fecha</th>
-                    <th className="px-3 py-2 font-medium">Rival</th>
-                    <th className="px-3 py-2 font-medium">Localía</th>
-                    <th className="px-3 py-2 font-medium text-center">Resultado</th>
-                    <th className="px-3 py-2 font-medium"></th>
+          {/* Entries table + inline form */}
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-200">
+              <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+                  <th className="px-3 py-2 font-medium w-16">Fecha</th>
+                  <th className="px-3 py-2 font-medium">Rival</th>
+                  <th className="px-3 py-2 font-medium w-24">Localía</th>
+                  <th className="px-3 py-2 font-medium w-32">Fecha</th>
+                  <th className="px-3 py-2 font-medium text-center w-20">Resultado</th>
+                  <th className="px-3 py-2 font-medium w-16"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {/* Inline add/edit row */}
+                {isAdding && (
+                  <tr className="bg-green-50/50">
+                    <td className="px-2 sm:px-3 py-2 text-gray-500 font-mono text-sm font-medium whitespace-nowrap">
+                      {editingId ? '' : `Fecha ${maxMatchDay + 1}`}
+                    </td>
+                    <td className="px-2 sm:px-3 py-2">
+                      <input
+                        type="text"
+                        value={formOpponent}
+                        onChange={(e) => setFormOpponent(e.target.value)}
+                        className="w-full min-w-0 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors"
+                        placeholder="Rival *"
+                        autoFocus
+                      />
+                    </td>
+                    <td className="px-2 sm:px-3 py-2">
+                      <select
+                        value={formLocation}
+                        onChange={(e) => setFormLocation(e.target.value)}
+                        className="w-full min-w-0 border border-gray-300 rounded-lg px-1.5 py-1.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors bg-white"
+                      >
+                        <option value="">-</option>
+                        <option value="LOCAL">Local</option>
+                        <option value="VISITANTE">Visitante</option>
+                        <option value="NEUTRAL">Neutral</option>
+                      </select>
+                    </td>
+                    <td className="px-2 sm:px-3 py-2">
+                      <input
+                        type="date"
+                        value={formDate}
+                        onChange={(e) => setFormDate(e.target.value)}
+                        className="w-full min-w-0 border border-gray-300 rounded-lg px-1.5 py-1.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors"
+                      />
+                    </td>
+                    <td className="px-2 sm:px-3 py-2">
+                      <div className="flex items-center gap-1 justify-center">
+                        <input
+                          type="number"
+                          min={0}
+                          value={formScoreHome}
+                          onChange={(e) => setFormScoreHome(e.target.value)}
+                          className="w-full min-w-0 border border-gray-300 rounded-lg px-1 py-1.5 text-sm text-center focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors"
+                          placeholder="-"
+                        />
+                        <span className="text-gray-400 text-xs shrink-0">-</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={formScoreAway}
+                          onChange={(e) => setFormScoreAway(e.target.value)}
+                          className="w-full min-w-0 border border-gray-300 rounded-lg px-1 py-1.5 text-sm text-center focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors"
+                          placeholder="-"
+                        />
+                      </div>
+                    </td>
+                    <td className="px-2 sm:px-3 py-2">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={handleSubmit}
+                          disabled={!formOpponent.trim()}
+                          className="p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title={editingId ? 'Guardar cambios' : 'Agregar partido'}
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={resetForm}
+                          className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Cancelar"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {sortedEntries.map((entry) => (
+                )}
+
+                {/* Entry rows */}
+                {sortedEntries.length > 0 ? (
+                  sortedEntries.map((entry) => (
                     <tr key={entry.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-2.5 text-gray-500 font-mono">
-                        {entry.matchDay ?? '-'}
+                      <td className="px-3 py-2.5 text-gray-500 font-mono text-sm">
+                        Fecha {entry.matchDay ?? '-'}
                       </td>
-                      <td className="px-3 py-2.5 text-gray-700">
+                      <td className="px-3 py-2.5 font-medium text-gray-800">
+                        {entry.opponent}
+                      </td>
+                      <td className="px-3 py-2.5 text-gray-600 text-sm">
+                        {entry.location ? LOCATION_LABELS[entry.location] ?? entry.location : '-'}
+                      </td>
+                      <td className="px-3 py-2.5 text-gray-600 text-sm">
                         {entry.date
                           ? new Date(entry.date + 'T12:00:00').toLocaleDateString('es-AR', {
                               day: 'numeric',
@@ -352,56 +383,52 @@ export function FixtureTab({ teamId }: FixtureTabProps) {
                             })
                           : '-'}
                       </td>
-                      <td className="px-3 py-2.5 font-medium text-gray-800">
-                        {entry.opponent}
-                      </td>
-                      <td className="px-3 py-2.5 text-gray-600">
-                        {entry.location ? LOCATION_LABELS[entry.location] ?? entry.location : '-'}
-                      </td>
-                      <td className="px-3 py-2.5 text-center font-mono font-medium">
+                      <td className="px-3 py-2.5 text-center font-mono text-sm font-medium">
                         {entry.scoreHome != null && entry.scoreAway != null ? (
-                          <span className={entry.scoreHome > entry.scoreAway ? 'text-green-600' : entry.scoreHome < entry.scoreAway ? 'text-red-600' : 'text-gray-600'}>
+                          <span className={
+                            entry.scoreHome > entry.scoreAway
+                              ? 'text-green-600'
+                              : entry.scoreHome < entry.scoreAway
+                              ? 'text-red-600'
+                              : 'text-gray-600'
+                          }>
                             {entry.scoreHome} - {entry.scoreAway}
                           </span>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-gray-300">-</span>
                         )}
                       </td>
                       <td className="px-3 py-2.5 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => startEdit(entry)}
-                            className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                             title="Editar"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
+                            <Pencil className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => setDeletingEntry(entry)}
-                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Eliminar"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="px-3 py-8 text-center text-gray-400 text-sm">
+                      No hay partidos cargados
+                    </td>
+                  </tr>
+                )}
+              </tbody>
               </table>
             </div>
-          ) : !fixtureImage ? (
-            <div className="text-center py-8 text-gray-400">
-              <svg className="w-12 h-12 mx-auto mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <p className="text-sm">No hay partidos cargados</p>
-            </div>
-          ) : null}
+          </div>
         </div>
       )}
 

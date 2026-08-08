@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
-import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { Loader2 } from 'lucide-react';
 
 export function CallbackPage() {
   const { isLoading, error } = useAuth0();
@@ -27,7 +27,7 @@ export function CallbackPage() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
-        <LoadingSpinner size="lg" />
+        <Loader2 className="w-14 h-14 animate-spin text-green-600 mx-auto" />
         <p className="text-gray-500 mt-4">Iniciando sesión...</p>
       </div>
     </div>
