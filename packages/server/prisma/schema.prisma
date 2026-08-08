@@ -52,16 +52,34 @@ model User {
 }
 
 model Team {
-  id         String      @id @default(uuid())
-  name       String
-  userId     String
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  players    Player[]
-  formations Formation[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id            String          @id @default(uuid())
+  name          String
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  players       Player[]
+  formations    Formation[]
+  fixtureImage  String?
+  fixtureEntries FixtureEntry[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   @@index([userId])
+}
+
+model FixtureEntry {
+  id        String   @id @default(uuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  matchDay  Int?
+  date      String?
+  opponent  String
+  location  String?
+  scoreHome Int?
+  scoreAway Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([teamId])
 }
 
 model Player {
@@ -73,6 +91,7 @@ model Player {
   team            Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
   formations      FormationPlayer[]
   matchEvents     MatchEvent[]
+  injuries        Injury[]
   substitutionsOut Substitution[]    @relation("PlayerOut")
   substitutionsIn  Substitution[]    @relation("PlayerIn")
   createdAt       DateTime           @default(now())
@@ -91,6 +110,7 @@ model Formation {
   scoreHome     Int?
   scoreAway     Int?
   opponent      String?
+  comments      String?
   teamId        String
   team          Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
   createdAt     DateTime           @default(now())
@@ -148,4 +168,61 @@ model Substitution {
   @@index([formationId])
   @@index([playerOutId])
   @@index([playerInId])
+}
+
+model Injury {
+  id            String    @id @default(uuid())
+  playerId      String
+  teamId        String
+  injuryType    String
+  incidentDate  DateTime
+  recoveryDate  DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  player        Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@index([teamId])
+}
+
+model TrainingSession {
+  id           String          @id @default(uuid())
+  userId       String
+  name         String
+  date         DateTime
+  generalNotes String?
+  diagram      Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  stages       TrainingStage[]
+
+  @@index([userId])
+}
+
+model TrainingStage {
+  id        String          @id @default(uuid())
+  sessionId String
+  name      String
+  order     Int
+  notes     String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  session   TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+model ExerciseTemplate {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  diagram   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }

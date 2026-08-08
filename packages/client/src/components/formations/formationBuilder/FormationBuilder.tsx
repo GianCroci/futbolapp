@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowRight, ChevronLeft, MousePointer2, MousePointerClick, Repeat, Trash2, Users } from 'lucide-react';
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { AppLayout } from '../../layout/AppLayout';
 import { LoadingSpinner } from '../../common/LoadingSpinner';
@@ -11,7 +12,6 @@ import { useFormationStore, SlotAssignment } from '../../../store/formationStore
 import { usePlayerStore } from '../../../store/playerStore';
 import { Player } from '../../../types';
 import { getPresetPositions, FORMATION_PRESETS } from '../../../utils/formationPresets';
-import { DraggablePlayer } from './DraggablePlayer';
 
 export function FormationBuilderPage() {
   const { teamId, formationId } = useParams<{ teamId: string; formationId?: string }>();
@@ -418,9 +418,7 @@ export function FormationBuilderPage() {
           onClick={() => navigate(`/teams/${teamId}`)}
           className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronLeft className="w-4 h-4" />
           Volver al equipo
         </button>
       </div>
@@ -508,13 +506,23 @@ export function FormationBuilderPage() {
       </div>
 
       {/* Instructions */}
-      <div className="mx-4 mt-3 text-xs text-gray-400 flex gap-4">
-        <span>🖱️ Arrastrá jugadores a la cancha</span>
-        <span>👆 Hacé click en un espacio y luego en un jugador</span>
-        <span>🔄 Click derecho en un jugador en cancha para quitarlo</span>
+      <div className="mx-4 mt-3 text-xs text-gray-400 flex flex-wrap gap-x-4 gap-y-1.5">
+        <span className="flex items-center gap-1.5">
+          <MousePointer2 className="w-3.5 h-3.5" />
+          Arrastrá jugadores a la cancha
+        </span>
+        <span className="flex items-center gap-1.5">
+          <MousePointerClick className="w-3.5 h-3.5" />
+          Hacé click en un espacio y luego en un jugador
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Repeat className="w-3.5 h-3.5" />
+          Click derecho en un jugador en cancha para quitarlo
+        </span>
         {selectedSlot && (
-          <span className="text-green-600 font-medium">
-            ➡️ Seleccioná un jugador de la lista para colocarlo en la posición destacada
+          <span className="flex items-center gap-1.5 text-green-600 font-medium">
+            <ArrowRight className="w-3.5 h-3.5" />
+            Seleccioná un jugador de la lista para colocarlo en la posición destacada
           </span>
         )}
       </div>
@@ -548,9 +556,12 @@ export function FormationBuilderPage() {
         </DndContext>
 
         {/* Roster sidebar */}
-        <div className="w-full md:w-72 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col max-h-[600px]">
+        <div className="w-full md:w-72 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col max-h-[50vh] md:max-h-[600px]">
           <div className="p-3 border-b border-gray-200 bg-gray-50 rounded-t-xl">
-            <h3 className="text-sm font-semibold text-gray-700">Titulares</h3>
+            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+              <Users className="w-4 h-4 text-green-600" />
+              Titulares
+            </h3>
             <p className="text-xs text-gray-400 mt-0.5">
               {starterCount}/11 en cancha · {players.length - playerCount} disponibles
             </p>
@@ -567,8 +578,9 @@ export function FormationBuilderPage() {
                 <div className="flex items-center gap-2 mt-1">
                   <button
                     onClick={() => handleRemoveFromSlot(selectedSlot)}
-                    className="text-xs text-red-600 hover:text-red-800 underline"
+                    className="flex items-center gap-1 text-xs text-red-600 hover:text-red-800 underline"
                   >
+                    <Trash2 className="w-3.5 h-3.5" />
                     Quitar de la cancha
                   </button>
                 </div>

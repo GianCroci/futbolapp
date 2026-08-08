@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
+import { CircleDot, Goal, Pencil } from 'lucide-react';
 import { useMatchEventStore } from '../../store/matchEventStore';
 import { MatchEvent, MatchEventType } from '../../types';
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -10,13 +12,29 @@ interface EventListProps {
   playerNames: Record<string, string>;
 }
 
-const EVENT_CONFIG: Record<MatchEventType, { label: string; icon: string; color: string }> = {
-  GOAL: { label: 'Gol', icon: '⚽', color: 'text-green-700 bg-green-50' },
-  ASSIST: { label: 'Asistencia', icon: '🅰️', color: 'text-blue-700 bg-blue-50' },
-  YELLOW_CARD: { label: 'Tarjeta amarilla', icon: '🟨', color: 'text-yellow-700 bg-yellow-50' },
-  RED_CARD: { label: 'Tarjeta roja', icon: '🟥', color: 'text-red-700 bg-red-50' },
-  SUB_IN: { label: 'Ingreso', icon: '🟢', color: 'text-emerald-700 bg-emerald-50' },
-  SUB_OUT: { label: 'Salida', icon: '🔴', color: 'text-rose-700 bg-rose-50' },
+const EVENT_CONFIG: Record<MatchEventType, { label: string; marker: ReactNode; color: string }> = {
+  GOAL: { label: 'Gol', marker: <Goal className="w-5 h-5" />, color: 'text-green-700 bg-green-50' },
+  ASSIST: { label: 'Asistencia', marker: <CircleDot className="w-5 h-5" />, color: 'text-emerald-700 bg-emerald-50' },
+  YELLOW_CARD: {
+    label: 'Tarjeta amarilla',
+    marker: <span className="inline-block w-3 h-3 rounded-sm bg-yellow-400" />,
+    color: 'text-yellow-700 bg-yellow-50',
+  },
+  RED_CARD: {
+    label: 'Tarjeta roja',
+    marker: <span className="inline-block w-3 h-3 rounded-sm bg-red-600" />,
+    color: 'text-red-700 bg-red-50',
+  },
+  SUB_IN: {
+    label: 'Ingreso',
+    marker: <span className="inline-block w-3 h-3 rounded-full bg-green-600" />,
+    color: 'text-emerald-700 bg-emerald-50',
+  },
+  SUB_OUT: {
+    label: 'Salida',
+    marker: <span className="inline-block w-3 h-3 rounded-full bg-red-500" />,
+    color: 'text-rose-700 bg-rose-50',
+  },
 };
 
 export function EventList({ events, teamId, formationId, playerNames }: EventListProps) {
@@ -44,7 +62,7 @@ export function EventList({ events, teamId, formationId, playerNames }: EventLis
   if (sorted.length === 0) {
     return (
       <div className="text-center py-8 text-gray-400">
-        <div className="text-4xl mb-2">📝</div>
+        <Pencil className="w-10 h-10 mx-auto mb-2" />
         <p className="text-sm">No hay eventos registrados</p>
       </div>
     );
@@ -60,7 +78,7 @@ export function EventList({ events, teamId, formationId, playerNames }: EventLis
               key={event.id}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg ${config.color}`}
             >
-              <span className="text-lg">{config.icon}</span>
+              <span className="flex items-center justify-center w-5 h-5 shrink-0">{config.marker}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium">
                   {playerNames[event.playerId] ?? 'Jugador'}

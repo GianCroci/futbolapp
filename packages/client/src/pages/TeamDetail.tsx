@@ -1,5 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  BarChart3,
+  CalendarDays,
+  Goal,
+  HeartPulse,
+  Pencil,
+  Plus,
+  Shirt,
+  Trash2,
+  Users,
+} from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { TeamForm } from '../components/teams/TeamForm';
@@ -8,14 +20,18 @@ import { useTeamStore } from '../store/teamStore';
 import { usePlayerStore } from '../store/playerStore';
 import { useFormationStore } from '../store/formationStore';
 import { useStatsStore } from '../store/statsStore';
+import { useFixtureStore } from '../store/fixtureStore';
 import { PlayerTable } from '../components/players/PlayerTable';
 import { PlayerForm } from '../components/players/PlayerForm';
 import { PlayerFilter } from '../components/players/PlayerFilter';
 import { StatsTable } from '../components/stats/StatsTable';
+import { StatsCharts } from '../components/stats/StatsCharts';
+import { FixtureTab } from '../components/fixture/FixtureTab';
+import { InjuryTab } from '../components/injuries/InjuryTab';
 import { Player, Formation } from '../types';
 import { getPresetPositions } from '../utils/formationPresets';
 
-type Tab = 'players' | 'formations' | 'stats';
+type Tab = 'players' | 'formations' | 'stats' | 'fixtures' | 'injuries';
 
 export function TeamDetailPage() {
   const { teamId } = useParams<{ teamId: string }>();
@@ -24,6 +40,7 @@ export function TeamDetailPage() {
   const { players, isLoading: playersLoading, fetchPlayers, createPlayer, updatePlayer, deletePlayer } = usePlayerStore();
   const { formations, isLoading: formationsLoading, fetchFormations, deleteFormation } = useFormationStore();
   const { stats, isLoading: statsLoading, fetchStats } = useStatsStore();
+  const { fetchFixtures } = useFixtureStore();
 
   // Team state
   const [isEditing, setIsEditing] = useState(false);
@@ -73,6 +90,10 @@ export function TeamDetailPage() {
   useEffect(() => {
     if (teamId && activeTab === 'stats') fetchStats(teamId, statsFrom || undefined, statsTo || undefined);
   }, [teamId, activeTab, statsFrom, statsTo, fetchStats]);
+
+  useEffect(() => {
+    if (teamId && activeTab === 'fixtures') fetchFixtures(teamId);
+  }, [teamId, activeTab, fetchFixtures]);
 
   // Team handlers
   const handleEditTeam = async (name: string) => {
@@ -169,11 +190,9 @@ export function TeamDetailPage() {
       <div className="mb-6">
         <button
           onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-1 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
+          className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ArrowLeft className="w-4 h-4" />
           Volver
         </button>
 
@@ -182,63 +201,90 @@ export function TeamDetailPage() {
           <div className="flex gap-2">
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
+              <Pencil className="w-4 h-4" />
               Editar
             </button>
             <button
               onClick={() => setShowDeleteDialog(true)}
               className="flex items-center gap-1.5 px-3 py-2 text-sm text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+              <Trash2 className="w-4 h-4" />
               Eliminar
             </button>
           </div>
         </div>
 
-        <div className="flex gap-6 mt-4 text-sm text-gray-500">
-          <span>👥 {currentTeam._count?.players || 0} jugadores</span>
-          <span>📋 {currentTeam._count?.formations || 0} formaciones</span>
+        <div className="flex flex-wrap gap-2 mt-4 text-sm text-gray-500">
+          <span className="inline-flex items-center gap-1.5">
+            <Users className="w-4 h-4 text-green-600" />
+            {currentTeam._count?.players || 0} jugadores
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Shirt className="w-4 h-4 text-green-600" />
+            {currentTeam._count?.formations || 0} formaciones
+          </span>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="mb-6 border-b border-gray-200">
-        <div className="flex gap-6">
+        <div className="flex gap-1 sm:gap-2 overflow-x-auto whitespace-nowrap pb-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-200">
           <button
             onClick={() => setActiveTab('players')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex items-center gap-1.5 shrink-0 pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'players'
                 ? 'border-green-600 text-green-700'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            👥 Jugadores
+            <Users className="w-4 h-4" />
+            Jugadores
           </button>
           <button
             onClick={() => setActiveTab('formations')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex items-center gap-1.5 shrink-0 pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'formations'
                 ? 'border-green-600 text-green-700'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            📋 Formaciones
+            <Shirt className="w-4 h-4" />
+            Formaciones
           </button>
           <button
             onClick={() => setActiveTab('stats')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex items-center gap-1.5 shrink-0 pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'stats'
                 ? 'border-green-600 text-green-700'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            📊 Estadísticas
+            <BarChart3 className="w-4 h-4" />
+            Estadísticas
+          </button>
+          <button
+            onClick={() => setActiveTab('fixtures')}
+            className={`flex items-center gap-1.5 shrink-0 pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'fixtures'
+                ? 'border-green-600 text-green-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <CalendarDays className="w-4 h-4" />
+            Fixture
+          </button>
+          <button
+            onClick={() => setActiveTab('injuries')}
+            className={`flex items-center gap-1.5 shrink-0 pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'injuries'
+                ? 'border-green-600 text-green-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <HeartPulse className="w-4 h-4" />
+            Lesiones
           </button>
         </div>
       </div>
@@ -258,9 +304,7 @@ export function TeamDetailPage() {
               }}
               className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+              <Plus className="w-4 h-4" />
               Agregar jugador
             </button>
           </div>
@@ -293,9 +337,7 @@ export function TeamDetailPage() {
               onClick={() => navigate(`/teams/${teamId}/formations/new`)}
               className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+              <Plus className="w-4 h-4" />
               Nueva formación
             </button>
           </div>
@@ -306,7 +348,9 @@ export function TeamDetailPage() {
             </div>
           ) : formations.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-              <div className="text-6xl mb-4">⚽</div>
+              <div className="flex justify-center mb-4">
+                <Goal className="w-16 h-16 text-green-200" />
+              </div>
               <h3 className="text-xl font-semibold text-gray-700 mb-2">Sin formaciones</h3>
               <p className="text-gray-500 mb-4">Todavía no creaste ninguna formación para este equipo.</p>
               <button
@@ -317,7 +361,7 @@ export function TeamDetailPage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {formations.map((formation) => (
                 <div
                   key={formation.id}
@@ -338,9 +382,7 @@ export function TeamDetailPage() {
                       className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Eliminar"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
@@ -407,11 +449,30 @@ export function TeamDetailPage() {
               <LoadingSpinner size="lg" />
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <StatsTable stats={stats} />
+            <div>
+              {/* Charts row: 33% each */}
+              <StatsCharts stats={stats} />
+
+              {/* Detailed Table */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-5 py-3 border-b border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-700">Detalle por jugador</h3>
+                </div>
+                <StatsTable stats={stats} />
+              </div>
             </div>
           )}
         </div>
+      )}
+
+      {/* Fixtures Tab */}
+      {activeTab === 'fixtures' && teamId && (
+        <FixtureTab teamId={teamId} />
+      )}
+
+      {/* Injuries Tab */}
+      {activeTab === 'injuries' && (
+        <InjuryTab teamId={currentTeam?.id ?? ''} />
       )}
 
       {/* Edit Team Form */}

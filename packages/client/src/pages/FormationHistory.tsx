@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronLeft, Goal, Plus, Trash2 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
@@ -51,21 +52,17 @@ export function FormationHistoryPage() {
           onClick={() => navigate(`/teams/${teamId}`)}
           className="flex items-center gap-1 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronLeft className="w-4 h-4" />
           Volver al equipo
         </button>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-2xl font-bold text-gray-800">Formaciones</h2>
           <button
             onClick={() => navigate(`/teams/${teamId}/formations/new`)}
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus className="w-4 h-4" />
             Nueva formación
           </button>
         </div>
@@ -77,7 +74,9 @@ export function FormationHistoryPage() {
         </div>
       ) : formations.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-          <div className="text-6xl mb-4">⚽</div>
+          <div className="flex items-center justify-center w-20 h-20 rounded-full bg-green-50 text-green-600 mx-auto mb-4">
+            <Goal className="w-10 h-10" />
+          </div>
           <h3 className="text-xl font-semibold text-gray-700 mb-2">Sin formaciones</h3>
           <p className="text-gray-500 mb-4">Todavía no creaste ninguna formación para este equipo.</p>
           <button
@@ -114,9 +113,7 @@ export function FormationHistoryPage() {
                   className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   title="Eliminar"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
 

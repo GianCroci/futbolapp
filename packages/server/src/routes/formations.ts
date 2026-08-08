@@ -8,8 +8,9 @@ import {
   deleteFormation,
   updatePlayerRating,
 } from '../services/formation.service';
-import { FormationType } from '@prisma/client';
+import { FormationType, PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient();
 const router = Router({ mergeParams: true });
 
 router.use(requireAuth);
@@ -234,6 +235,81 @@ router.patch('/:formationId/players/:playerId/rating', async (req: Request, res:
       res.status(404).json({ error: 'Formación o jugador no encontrado' });
       return;
     }
+
+    res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH /api/teams/:teamId/formations/:formationId — update formation metadata (partial)
+router.patch('/:formationId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authReq = req as AuthRequest;
+    const teamId = req.params.teamId as string;
+    const formationId = req.params.formationId as string;
+    const { comments, opponent, scoreHome, scoreAway, matchDate } = req.body;
+
+    // Build partial update data
+    const data: Record<string, unknown> = {};
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'comments')) {
+      if (typeof comments !== 'string' && comments !== null) {
+        res.status(400).json({ error: 'Los comentarios deben ser texto o null' });
+        return;
+      }
+      data.comments = comments || null;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'opponent')) {
+      if (typeof opponent !== 'string' && opponent !== null) {
+        res.status(400).json({ error: 'El rival debe ser texto o null' });
+        return;
+      }
+      data.opponent = opponent || null;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'scoreHome')) {
+      if (scoreHome !== null && (typeof scoreHome !== 'number' || !Number.isInteger(scoreHome) || scoreHome < 0)) {
+        res.status(400).json({ error: 'El marcador local debe ser un número entero positivo o null' });
+        return;
+      }
+      data.scoreHome = scoreHome ?? null;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'scoreAway')) {
+      if (scoreAway !== null && (typeof scoreAway !== 'number' || !Number.isInteger(scoreAway) || scoreAway < 0)) {
+        res.status(400).json({ error: 'El marcador visitante debe ser un número entero positivo o null' });
+        return;
+      }
+      data.scoreAway = scoreAway ?? null;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'matchDate')) {
+      data.matchDate = matchDate ? new Date(matchDate) : null;
+    }
+
+    if (Object.keys(data).length === 0) {
+      res.status(400).json({ error: 'No hay campos para actualizar' });
+      return;
+    }
+
+    const team = await prisma.team.findFirst({ where: { id: teamId, userId: authReq.user!.userId } });
+    if (!team) {
+      res.status(404).json({ error: 'Equipo no encontrado' });
+      return;
+    }
+
+    const formation = await prisma.formation.findFirst({ where: { id: formationId, teamId } });
+    if (!formation) {
+      res.status(404).json({ error: 'Formación no encontrada' });
+      return;
+    }
+
+    const updated = await prisma.formation.update({
+      where: { id: formationId },
+      data,
+    });
 
     res.json(updated);
   } catch (error) {

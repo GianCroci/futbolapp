@@ -1,3 +1,4 @@
+import { ArrowRight, Trash2, Users } from 'lucide-react';
 import { Player } from '../../../types';
 
 export interface SubstituteEntry {
@@ -52,16 +53,19 @@ export function SubstitutesPanel({
   );
 
   return (
-    <div className="mx-4 mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+    <div className="mx-4 mt-4 p-4 bg-green-50 rounded-xl border border-green-200">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h3 className="text-sm font-semibold text-blue-800">Suplentes</h3>
-          <p className="text-xs text-blue-500">
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-green-800">
+            <Users className="w-4 h-4 text-green-600" />
+            Suplentes
+          </h3>
+          <p className="text-xs text-green-600 mt-0.5">
             {substitutes.length} de 12 máximo · Mín. 6 para completar el plantel
           </p>
         </div>
         {substitutes.length > 0 && (
-          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
             {substitutes.length}
           </span>
         )}
@@ -75,9 +79,9 @@ export function SubstitutesPanel({
             return (
               <div
                 key={sub.playerId}
-                className="flex items-center gap-3 px-3 py-2 bg-white rounded-lg border border-blue-200"
+                className="flex flex-wrap items-center gap-3 px-3 py-2 bg-white rounded-lg border border-green-200"
               >
-                <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold font-mono">
+                <span className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold font-mono shrink-0">
                   {sub.playerDorsal ?? '?'}
                 </span>
                 <div className="flex-1 min-w-0">
@@ -87,7 +91,7 @@ export function SubstitutesPanel({
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-blue-600">Min:</label>
+                  <label className="text-xs text-green-600">Min:</label>
                   <input
                     type="number"
                     min={0}
@@ -96,13 +100,14 @@ export function SubstitutesPanel({
                     onChange={(e) =>
                       onUpdateMinute(sub.playerId, parseInt(e.target.value, 10) || 0)
                     }
-                    className="w-14 border border-blue-300 rounded px-2 py-1 text-xs text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    className="w-14 border border-green-300 rounded px-2 py-1 text-xs text-center focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                   />
                 </div>
                 <button
                   onClick={() => onRemoveSubstitute(sub.playerId)}
-                  className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 hover:bg-red-50 rounded transition-colors"
+                  className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 hover:bg-red-50 rounded transition-colors"
                 >
+                  <Trash2 className="w-3.5 h-3.5" />
                   Quitar
                 </button>
               </div>
@@ -112,13 +117,13 @@ export function SubstitutesPanel({
       )}
 
       {/* Add substitute search */}
-      <div className="border-t border-blue-200 pt-3">
+      <div className="border-t border-green-200 pt-3">
         <input
           type="text"
           placeholder="Buscar jugador para agregar como suplente..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          className="w-full px-3 py-2 border border-green-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
         />
         {searchQuery && available.length > 0 && (
           <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
@@ -129,9 +134,9 @@ export function SubstitutesPanel({
                   onAddSubstitute(player);
                   onSearchChange('');
                 }}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg border border-blue-100 bg-white hover:border-blue-300 hover:shadow-sm transition-all text-left"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg border border-green-100 bg-white hover:border-green-300 hover:shadow-sm transition-all text-left"
               >
-                <span className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold font-mono">
+                <span className="w-7 h-7 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold font-mono shrink-0">
                   {player.dorsal ?? '?'}
                 </span>
                 <div className="flex-1 min-w-0">
@@ -140,7 +145,10 @@ export function SubstitutesPanel({
                     {POSITION_SHORT[player.position] || player.position}
                   </p>
                 </div>
-                <span className="text-xs text-blue-600 font-medium">+ Agregar</span>
+                <span className="flex items-center gap-1 text-xs text-green-600 font-medium whitespace-nowrap">
+                  Agregar
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </span>
               </button>
             ))}
           </div>

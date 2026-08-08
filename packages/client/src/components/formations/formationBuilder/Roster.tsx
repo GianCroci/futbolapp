@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react';
 import { Player } from '../../../types';
 
 interface RosterProps {
@@ -55,7 +56,10 @@ export function Roster({ players, assignedPlayerIds, searchQuery, onSearchChange
                   <p className="text-sm font-medium text-gray-800 truncate">{player.name}</p>
                   <p className="text-xs text-gray-400">{shortPosition(player.position)}</p>
                 </div>
-                <span className="text-xs text-red-500 font-medium">Quitar</span>
+                <span className="flex items-center gap-1 text-xs text-red-500 font-medium whitespace-nowrap">
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Quitar
+                </span>
               </button>
             ))}
             <div className="border-t border-gray-200 pt-2 mt-2" />
