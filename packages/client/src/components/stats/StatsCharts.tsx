@@ -8,7 +8,7 @@ interface StatsChartsProps {
   stats: PlayerStat[];
 }
 
-const PIE_COLORS = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4', '#EC4899', '#14B8A6'];
+const PIE_COLORS = ['#2e8b57', '#3ba563', '#5dc280', '#93dbaa', '#276f48', '#1b5e20', '#4caf50', '#1b4a2f'];
 
 function EmptyChart({ message }: { message: string }) {
   return (
@@ -70,14 +70,14 @@ export function StatsCharts({ stats }: StatsChartsProps) {
                 outerRadius={85}
                 paddingAngle={2}
                 dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent = 0 }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 labelLine={false}
               >
                 {goalsByPlayer.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => [`${value} goles`, 'Goles']} />
+              <Tooltip formatter={(value) => [`${value} goles`, 'Goles']} />
             </PieChart>
           </ResponsiveContainer>
         ) : (
@@ -91,10 +91,10 @@ export function StatsCharts({ stats }: StatsChartsProps) {
         {top5Minutes.length > 0 ? (
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={top5Minutes} layout="vertical" margin={{ left: 10, right: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis type="number" tick={{ fontSize: 11 }} />
               <YAxis dataKey="name" type="category" width={70} tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(value: number) => [`${value} min`, 'Minutos']} />
+              <Tooltip formatter={(value) => [`${value} min`, 'Minutos']} />
               <Bar dataKey="minutos" fill="#3B82F6" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -109,10 +109,10 @@ export function StatsCharts({ stats }: StatsChartsProps) {
         {top5Rating.length > 0 ? (
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={top5Rating} layout="vertical" margin={{ left: 10, right: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis type="number" domain={[0, 10]} tick={{ fontSize: 11 }} />
               <YAxis dataKey="name" type="category" width={70} tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(value: number) => [value.toFixed(1), 'Rating']} />
+              <Tooltip formatter={(value) => [Number(value ?? 0).toFixed(1), 'Rating']} />
               <Bar dataKey="rating" fill="#F59E0B" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>

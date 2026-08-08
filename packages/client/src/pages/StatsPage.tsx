@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { BarChart3, ChevronLeft } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { StatsCharts } from '../components/stats/StatsCharts';
@@ -25,13 +26,14 @@ export function StatsPage() {
           onClick={() => navigate(`/teams/${teamId}`)}
           className="flex items-center gap-1 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronLeft className="w-4 h-4" />
           Volver al equipo
         </button>
 
-        <h2 className="text-2xl font-bold text-gray-800">Estadísticas</h2>
+        <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-800">
+          <BarChart3 className="w-6 h-6 text-green-600" />
+          Estadísticas
+        </h2>
       </div>
 
       {/* Date filters */}

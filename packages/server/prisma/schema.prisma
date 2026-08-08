@@ -91,6 +91,7 @@ model Player {
   team            Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
   formations      FormationPlayer[]
   matchEvents     MatchEvent[]
+  injuries        Injury[]
   substitutionsOut Substitution[]    @relation("PlayerOut")
   substitutionsIn  Substitution[]    @relation("PlayerIn")
   createdAt       DateTime           @default(now())
@@ -167,4 +168,61 @@ model Substitution {
   @@index([formationId])
   @@index([playerOutId])
   @@index([playerInId])
+}
+
+model Injury {
+  id            String    @id @default(uuid())
+  playerId      String
+  teamId        String
+  injuryType    String
+  incidentDate  DateTime
+  recoveryDate  DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  player        Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@index([teamId])
+}
+
+model TrainingSession {
+  id           String          @id @default(uuid())
+  userId       String
+  name         String
+  date         DateTime
+  generalNotes String?
+  diagram      Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  stages       TrainingStage[]
+
+  @@index([userId])
+}
+
+model TrainingStage {
+  id        String          @id @default(uuid())
+  sessionId String
+  name      String
+  order     Int
+  notes     String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  session   TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+model ExerciseTemplate {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  diagram   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }

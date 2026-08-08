@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronLeft, Download, MessageCircle, Pencil, Plus, Repeat, Trash2 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { useFormationStore, SlotAssignment } from '../store/formationStore';
@@ -190,14 +191,12 @@ export function FormationViewPage() {
           onClick={() => navigate(`/teams/${teamId}/formations`)}
           className="flex items-center gap-1 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronLeft className="w-4 h-4" />
           Volver a formaciones
         </button>
 
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-0">
             <h2 className="text-2xl font-bold text-gray-800">{currentFormation.name}</h2>
             <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
               <span className="bg-gray-100 text-gray-600 px-2.5 py-0.5 rounded-full text-xs font-medium">
@@ -276,40 +275,35 @@ export function FormationViewPage() {
                 )}
                 <button
                   onClick={startEditingMetadata}
-                  className="px-2 py-1 text-xs text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
+                  className="flex items-center gap-1 px-2 py-1 text-xs text-green-600 bg-green-50 rounded hover:bg-green-100"
                 >
+                  <Pencil className="w-3 h-3" />
                   Editar datos del partido
                 </button>
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setIsCitacionOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
+              <MessageCircle className="w-4 h-4" />
               Generar Citación
             </button>
             <button
               onClick={handleExportPdf}
               disabled={isExporting}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+              <Download className="w-4 h-4" />
               {isExporting ? 'Exportando...' : 'Exportar PDF'}
             </button>
             <button
               onClick={() => navigate(`/teams/${teamId}/formations/edit/${formationId}`)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
+              <Pencil className="w-4 h-4" />
               Editar
             </button>
           </div>
@@ -388,7 +382,7 @@ export function FormationViewPage() {
                     )}
                   </div>
                   {didPlay ? (
-                    <div className="flex items-center gap-1 pl-9">
+                    <div className="flex flex-wrap items-center gap-1 sm:gap-2 pl-9">
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
                         <button
                           key={n}
@@ -426,18 +420,14 @@ export function FormationViewPage() {
               title={hasSubstitutes ? 'Registrar sustitución' : 'No hay suplentes designados'}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
+              <Repeat className="w-4 h-4" />
               Registrar sustitución
             </button>
             <button
               onClick={() => setIsEventFormOpen(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+              <Plus className="w-4 h-4" />
               Agregar evento
             </button>
           </div>
@@ -455,7 +445,7 @@ export function FormationViewPage() {
                     key={sub.id}
                     className="flex items-center gap-3 px-3 py-2 rounded-lg text-amber-700 bg-amber-50"
                   >
-                    <span className="text-lg">🔄</span>
+                    <Repeat className="w-4 h-4 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">
                         Min {sub.minute}: {playerNames[sub.playerOutId] ?? 'Jugador'} sale →{' '}
@@ -467,9 +457,7 @@ export function FormationViewPage() {
                       className="p-1 opacity-50 hover:opacity-100 transition-opacity"
                       title="Eliminar sustitución"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
@@ -495,8 +483,9 @@ export function FormationViewPage() {
                 setCommentsText(currentFormation.comments || '');
                 setIsEditingComments(true);
               }}
-              className="px-2 py-1 text-xs text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-green-600 bg-green-50 rounded hover:bg-green-100"
             >
+              <Pencil className="w-3 h-3" />
               {currentFormation.comments ? 'Editar' : 'Agregar análisis'}
             </button>
           )}
