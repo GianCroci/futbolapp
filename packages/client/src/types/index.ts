@@ -110,3 +110,107 @@ export interface FixtureData {
   entries: FixtureEntry[];
   fixtureImage: string | null;
 }
+
+export interface Injury {
+  id: string;
+  playerId: string;
+  playerName?: string;
+  teamId: string;
+  injuryType: string;
+  incidentDate: string;
+  recoveryDate: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateInjuryPayload {
+  playerId: string;
+  injuryType: string;
+  incidentDate: string;
+  recoveryDate?: string;
+  notes?: string;
+}
+
+export interface UpdateInjuryPayload {
+  playerId?: string;
+  injuryType?: string;
+  incidentDate?: string;
+  recoveryDate?: string | null;
+  notes?: string | null;
+}
+
+// Training
+export interface TrainingSession {
+  id: string;
+  userId: string;
+  name: string;
+  date: string;
+  generalNotes: string | null;
+  diagram?: FieldDiagram | null;
+  stages?: TrainingStage[];
+  _count?: { stages: number };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TrainingStage {
+  id: string;
+  sessionId: string;
+  name: string;
+  order: number;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTrainingSessionPayload {
+  name: string;
+  date: string;
+  generalNotes?: string | null;
+}
+
+export interface UpdateTrainingSessionPayload {
+  name?: string;
+  date?: string;
+  generalNotes?: string | null;
+  diagram?: FieldDiagram | null;
+}
+
+// Exercise Templates
+export type FieldItemType = 'cone' | 'ball' | 'arrow' | 'player';
+
+export interface FieldItem {
+  id: string;
+  type: FieldItemType;
+  x: number;       // 0-100 percentage
+  y: number;       // 0-100 percentage
+  rotation: number; // 0-360 degrees
+  scale?: number;   // 0.5-3, for cone/ball/player
+  length?: number;  // for arrow: line length in viewBox units (default 10)
+  label?: string;
+}
+
+export interface FieldDiagram {
+  items: FieldItem[];
+}
+
+export interface ExerciseTemplate {
+  id: string;
+  userId: string;
+  name: string;
+  diagram: FieldDiagram;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTrainingStagePayload {
+  name: string;
+  order: number;
+  notes?: string | null;
+}
+
+export interface UpdateTrainingStagePayload {
+  name?: string;
+  notes?: string | null;
+}
