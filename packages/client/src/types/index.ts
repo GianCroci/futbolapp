@@ -140,6 +140,24 @@ export interface UpdateInjuryPayload {
   notes?: string | null;
 }
 
+// AI Insights
+export type InsightsMessageRole = 'user' | 'assistant' | 'error';
+
+export interface InsightsMessage {
+  id: string;
+  role: InsightsMessageRole;
+  content: string;
+  timestamp: string;
+}
+
+export interface InsightsQueryRequest {
+  question: string;
+}
+
+export interface InsightsResponse {
+  answer: string;
+}
+
 // Training
 export interface TrainingSession {
   id: string;
