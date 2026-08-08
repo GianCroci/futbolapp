@@ -10,6 +10,7 @@ import substitutionRoutes from './routes/substitutions';
 import statsRoutes from './routes/stats';
 import fixtureRoutes from './routes/fixtures';
 import injuryRoutes from './routes/injuries';
+import insightRoutes from './routes/insights';
 import templateRoutes from './routes/templates';
 import trainingRoutes from './routes/training';
 import { errorHandler, notFoundHandler } from './middleware/error';
@@ -34,6 +35,7 @@ app.use('/api/teams/:teamId/formations/:formationId/substitutions', substitution
 app.use('/api/teams/:teamId/stats', statsRoutes);
 app.use('/api/teams/:teamId/fixtures', fixtureRoutes);
 app.use('/api/teams/:teamId/injuries', injuryRoutes);
+app.use('/api/teams/:teamId/insights', insightRoutes);
 app.use('/api/exercise-templates', templateRoutes);
 app.use('/api/training-sessions', trainingRoutes);
 
