@@ -7,15 +7,15 @@ interface TemplateModalProps {
   isOpen: boolean;
   currentDiagram: FieldDiagram;
   onClose: () => void;
-  onLoadTemplate: (diagram: FieldDiagram) => void;
+  /** Load tab appends the template as a NEW diagram — never overwrites the current one. */
+  onAddTemplate: (diagram: FieldDiagram) => void;
 }
 
-export function TemplateModal({ isOpen, currentDiagram, onClose, onLoadTemplate }: TemplateModalProps) {
+export function TemplateModal({ isOpen, currentDiagram, onClose, onAddTemplate }: TemplateModalProps) {
   const { templates, isLoading, fetchTemplates, createTemplate, deleteTemplate } = useTemplateStore();
   const [tab, setTab] = useState<'save' | 'load'>('load');
   const [templateName, setTemplateName] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [confirmLoad, setConfirmLoad] = useState<ExerciseTemplate | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -42,16 +42,8 @@ export function TemplateModal({ isOpen, currentDiagram, onClose, onLoadTemplate 
   };
 
   const handleLoad = (template: ExerciseTemplate) => {
-    onLoadTemplate(template.diagram);
+    onAddTemplate(template.diagram);
     onClose();
-  };
-
-  const handleLoadClick = (template: ExerciseTemplate) => {
-    if (currentDiagram.items.length > 0) {
-      setConfirmLoad(template);
-    } else {
-      handleLoad(template);
-    }
   };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
@@ -147,7 +139,7 @@ export function TemplateModal({ isOpen, currentDiagram, onClose, onLoadTemplate 
                   <button
                     key={template.id}
                     type="button"
-                    onClick={() => handleLoadClick(template)}
+                    onClick={() => handleLoad(template)}
                     className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-gray-50 border border-gray-200 transition-colors"
                   >
                     <span className="text-sm font-medium text-gray-900">{template.name}</span>
@@ -162,36 +154,6 @@ export function TemplateModal({ isOpen, currentDiagram, onClose, onLoadTemplate 
                   </button>
                 ))
               )}
-            </div>
-          )}
-
-          {/* Confirmation overlay */}
-          {confirmLoad && (
-            <div className="absolute inset-0 bg-white/90 flex items-center justify-center z-10 rounded-b-2xl">
-              <div className="text-center p-6">
-                <p className="text-sm text-gray-700 mb-4">
-                  ¿Cargar plantilla? Se reemplazarán los {currentDiagram.items.length} elemento{currentDiagram.items.length !== 1 ? 's' : ''} actuales.
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleLoad(confirmLoad);
-                      setConfirmLoad(null);
-                    }}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700"
-                  >
-                    Cargar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmLoad(null)}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
             </div>
           )}
         </div>

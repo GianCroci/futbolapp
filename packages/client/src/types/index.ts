@@ -167,7 +167,7 @@ export interface TrainingSession {
   name: string;
   date: string;
   generalNotes: string | null;
-  diagram?: FieldDiagram | null;
+  diagram?: SessionDiagrams | null;
   stages?: TrainingStage[];
   _count?: { stages: number };
   createdAt: string;
@@ -194,7 +194,7 @@ export interface UpdateTrainingSessionPayload {
   name?: string;
   date?: string;
   generalNotes?: string | null;
-  diagram?: FieldDiagram | null;
+  diagram?: SessionDiagrams | null;
 }
 
 // Exercise Templates
