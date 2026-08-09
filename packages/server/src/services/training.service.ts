@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { AppError } from '../middleware/error';
 
 const prisma = new PrismaClient();
 
@@ -23,6 +24,33 @@ interface CreateStageData {
 interface UpdateStageData {
   name?: string;
   notes?: string;
+}
+
+/**
+ * Validate a `diagram` payload for update().
+ * Accepts `null`/`undefined` (clearing the column) or the new shape
+ * `{ diagrams: [{ id: string, name: string, items: array }] }`.
+ * Legacy `{ items }` writes are intentionally rejected — the client always
+ * sends the new shape.
+ */
+export function isValidDiagramsPayload(value: unknown): boolean {
+  if (value === null || value === undefined) return true;
+  if (typeof value !== 'object' || Array.isArray(value)) return false;
+
+  const diagrams = (value as { diagrams?: unknown }).diagrams;
+  if (!Array.isArray(diagrams)) return false;
+
+  return diagrams.every((entry) => {
+    if (typeof entry !== 'object' || entry === null) return false;
+    const { id, name, items } = entry as Record<string, unknown>;
+    return (
+      typeof id === 'string' &&
+      id.length > 0 &&
+      typeof name === 'string' &&
+      name.length > 0 &&
+      Array.isArray(items)
+    );
+  });
 }
 
 export async function getAllByUser(userId: string) {
@@ -72,6 +100,12 @@ export async function create(userId: string, data: CreateTrainingData) {
 }
 
 export async function update(id: string, userId: string, data: UpdateTrainingData) {
+  if (data.diagram !== undefined && !isValidDiagramsPayload(data.diagram)) {
+    const error = new Error('Formato inválido del campo diagrama') as AppError;
+    error.statusCode = 400;
+    throw error;
+  }
+
   const session = await prisma.trainingSession.findFirst({ where: { id, userId } });
   if (!session) return null;
 
