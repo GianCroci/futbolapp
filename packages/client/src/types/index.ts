@@ -152,6 +152,8 @@ export interface InsightsMessage {
 
 export interface InsightsQueryRequest {
   question: string;
+  /** Prior conversation turns (coherence only — the server still forces the model to answer from the current context). Wire shape: `{ role, content }`; error messages must not be sent. */
+  history?: Array<{ role: Exclude<InsightsMessageRole, 'error'>; content: string }>;
 }
 
 export interface InsightsResponse {
