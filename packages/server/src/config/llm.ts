@@ -77,7 +77,7 @@ class GeminiProvider implements LLMProvider {
             ...(history ?? []).map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
             { role: 'user', parts: [{ text: prompt }] },
           ],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 500 },
+          generationConfig: { temperature: 0.2, maxOutputTokens: 8192 },
         },
         { headers: { 'x-goog-api-key': this.config.apiKey } }
       );
@@ -92,9 +92,18 @@ class GeminiProvider implements LLMProvider {
     }
 
     const candidates = response.data?.candidates as
-      | Array<{ content?: { parts?: Array<{ text?: string }> } }>
+      | Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>
       | undefined;
-    const text = candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('') ?? '';
+    const candidate = candidates?.[0];
+    const text = candidate?.content?.parts?.map((part) => part.text ?? '').join('') ?? '';
+
+    // Never silently return a cut answer: if Gemini stopped because it hit the
+    // output budget, surface a clear error instead of a partial response.
+    if (candidate?.finishReason === 'MAX_TOKENS') {
+      throw new LLMUpstreamError(
+        'El proveedor de IA alcanzó el límite de longitud de la respuesta. Intente con una pregunta más acotada.'
+      );
+    }
 
     if (!text.trim()) {
       throw new LLMUpstreamError('El proveedor de IA devolvió una respuesta vacía.');
