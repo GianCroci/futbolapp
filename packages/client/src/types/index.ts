@@ -215,6 +215,16 @@ export interface FieldDiagram {
   items: FieldItem[];
 }
 
+/** A single named field diagram inside a training session's diagram column. */
+export interface NamedDiagram {
+  id: string;
+  name: string;
+  items: FieldItem[];
+}
+
+/** New-shape storage format for the session `diagram` JSON column. */
+export type SessionDiagrams = { diagrams: NamedDiagram[] };
+
 export interface ExerciseTemplate {
   id: string;
   userId: string;
