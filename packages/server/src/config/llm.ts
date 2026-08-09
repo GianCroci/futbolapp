@@ -8,9 +8,19 @@ import axios, { AxiosResponse } from 'axios';
 const envPath = resolve(__dirname, '../../.env');
 dotenv.config({ path: envPath });
 
+export interface ConversationTurn {
+  role: 'user' | 'assistant';
+  text: string;
+}
+
 export interface LLMProvider {
-  /** Generate a completion. `prompt` is the user question plus rendered context; `system` is the fixed system instruction. */
-  generate(prompt: string, system: string): Promise<string>;
+  /**
+   * Generate a completion. `prompt` is the user question plus rendered context;
+   * `system` is the fixed system instruction; `history` (optional) is the prior
+   * conversation, sent for coherence only — the answer must still come from the
+   * current prompt context.
+   */
+  generate(prompt: string, system: string, history?: ConversationTurn[]): Promise<string>;
 }
 
 export interface LLMConfig {
@@ -56,14 +66,17 @@ export class LLMUpstreamError extends Error {
 class GeminiProvider implements LLMProvider {
   constructor(private readonly config: LLMConfig) {}
 
-  async generate(prompt: string, system: string): Promise<string> {
+  async generate(prompt: string, system: string, history?: ConversationTurn[]): Promise<string> {
     let response: AxiosResponse;
     try {
       response = await axios.post(
         `https://generativelanguage.googleapis.com/v1beta/models/${this.config.model}:generateContent`,
         {
           systemInstruction: { parts: [{ text: system }] },
-          contents: [{ parts: [{ text: prompt }] }],
+          contents: [
+            ...(history ?? []).map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
+            { role: 'user', parts: [{ text: prompt }] },
+          ],
           generationConfig: { temperature: 0.2, maxOutputTokens: 500 },
         },
         { headers: { 'x-goog-api-key': this.config.apiKey } }
