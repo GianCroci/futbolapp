@@ -94,10 +94,28 @@ function mapInsightsError(error: unknown): { message: string; configError: boole
 
 export const useInsightsStore = create<InsightsState>((set, get) => {
   // Shared tail of sendQuestion/retryQuestion: the user message is already in
-  // the conversation; POST it and append the assistant answer or an error message.
+  // the conversation; POST it (with the last 10 prior turns as conversation
+  // history — coherence only, per the server contract) and append the assistant
+  // answer or an error message.
   const postQuestion = async (teamId: string, question: string): Promise<void> => {
     try {
-      const body: InsightsQueryRequest = { question };
+      const current = get().conversations[teamId]?.messages ?? [];
+      // Prior turns = everything except the just-sent question (always the last
+      // message at this point). Keep only user/assistant turns (never errors),
+      // cap at the last 10, and map to the wire shape { role, content }.
+      const history: Array<{ role: 'user' | 'assistant'; content: string }> = current
+        .slice(0, -1)
+        .filter(
+          (m): m is InsightsMessage & { role: 'user' | 'assistant' } =>
+            m.role === 'user' || m.role === 'assistant'
+        )
+        .slice(-10)
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      const body: InsightsQueryRequest = {
+        question,
+        history: history.length > 0 ? history : undefined,
+      };
       const response = await api.post<InsightsResponse>(`/teams/${teamId}/insights/query`, body);
       const answerMessage = makeMessage('assistant', response.data.answer);
       set((state) => {
