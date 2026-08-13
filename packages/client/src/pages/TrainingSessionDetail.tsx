@@ -176,17 +176,34 @@ export function TrainingSessionDetail() {
     [diagrams],
   );
 
-  const confirmDeleteDiagram = useCallback(() => {
+  /**
+   * Deleting a diagram persists immediately (unlike other diagram changes,
+   * which are saved with the explicit "Guardar diagrama" button). The local
+   * state updates optimistically; if the PUT fails the deletion stays visible
+   * in the UI, a save-error banner is shown, and structureDirty keeps the
+   * manual save button enabled for a retry.
+   */
+  const confirmDeleteDiagram = useCallback(async () => {
     if (!deletingDiagramId) return;
     const next = diagrams.filter((d) => d.id !== deletingDiagramId);
     setDiagrams(next);
     setDirtyMap(pruneDirty(dirtyMap, next.map((d) => d.id)));
-    setStructureDirty(true);
     if (activeDiagramId === deletingDiagramId) {
       setActiveDiagramId(next.length > 0 ? next[0].id : null);
     }
     setDeletingDiagramId(null);
-  }, [deletingDiagramId, diagrams, activeDiagramId, dirtyMap]);
+    if (!id) return;
+    setIsSavingDiagram(true);
+    setSaveError(null);
+    const ok = await updateSession(id, { diagram: { diagrams: next } });
+    if (ok) {
+      setStructureDirty(false);
+    } else {
+      setStructureDirty(true);
+      setSaveError('No se pudo guardar el diagrama. Verificá tu conexión e intentá de nuevo.');
+    }
+    setIsSavingDiagram(false);
+  }, [deletingDiagramId, diagrams, activeDiagramId, dirtyMap, id, updateSession]);
 
   const handleDeleteStage = async () => {
     if (!id || !deletingStageId) return;
