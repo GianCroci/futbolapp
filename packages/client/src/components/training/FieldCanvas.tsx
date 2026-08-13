@@ -76,46 +76,43 @@ export function FieldCanvas({
       <svg
         ref={svgRef}
         viewBox="0 0 100 100"
-        preserveAspectRatio="xMidYMid meet"
+        preserveAspectRatio="none"
         className="w-full aspect-[2/3] max-h-[600px] cursor-crosshair"
         onMouseDown={handleMouseDown}
       >
         {/* Field background */}
         <rect x="0" y="0" width="100" height="100" fill={FIELD_GREEN} rx="0.5" />
 
-        {/* Field markings */}
+        {/* Field markings — the pitch fills the whole SVG (no outer margins) */}
         <g stroke="white" fill="none" opacity={0.8}>
           {/* Outer boundary */}
-          <rect x="2" y="2" width="96" height="96" strokeWidth="0.3" rx="0.3" />
+          <rect x="0" y="0" width="100" height="100" strokeWidth="0.3" rx="0.5" />
 
           {/* Halfway line */}
-          <line x1="50" y1="2" x2="50" y2="98" strokeWidth="0.25" />
+          <line x1="50" y1="0" x2="50" y2="100" strokeWidth="0.25" />
 
           {/* Center circle */}
           <circle cx="50" cy="50" r="9" strokeWidth="0.2" />
           <circle cx="50" cy="50" r="0.4" fill="white" />
 
           {/* Penalty areas */}
-          <rect x="2" y="18" width="16" height="64" strokeWidth="0.25" />
-          <rect x="82" y="18" width="16" height="64" strokeWidth="0.25" />
+          <rect x="0" y="18" width="16" height="64" strokeWidth="0.25" />
+          <rect x="84" y="18" width="16" height="64" strokeWidth="0.25" />
 
           {/* Goal areas */}
-          <rect x="2" y="32" width="6" height="36" strokeWidth="0.25" />
-          <rect x="92" y="32" width="6" height="36" strokeWidth="0.25" />
+          <rect x="0" y="32" width="6" height="36" strokeWidth="0.25" />
+          <rect x="94" y="32" width="6" height="36" strokeWidth="0.25" />
 
           {/* Penalty spots */}
-          <circle cx="14" cy="50" r="0.35" fill="white" />
-          <circle cx="86" cy="50" r="0.35" fill="white" />
+          <circle cx="12" cy="50" r="0.35" fill="white" />
+          <circle cx="88" cy="50" r="0.35" fill="white" />
 
-          {/* Penalty arcs */}
-          <path d="M 14,40 A 5,5 0 0,1 14,60" strokeWidth="0.2" />
-          <path d="M 86,40 A 5,5 0 0,0 86,60" strokeWidth="0.2" />
-
-          {/* Corners */}
-          <path d="M 2,2 A 2,2 0 0,0 4,0" strokeWidth="0.2" />
-          <path d="M 98,2 A 2,2 0 0,1 96,0" strokeWidth="0.2" />
-          <path d="M 2,98 A 2,2 0 0,1 4,100" strokeWidth="0.2" />
-          <path d="M 98,98 A 2,2 0 0,0 96,100" strokeWidth="0.2" />
+          {/* Corners — quarter-circle arcs centered on each corner flag,
+              drawn inside the field since the pitch fills the SVG */}
+          <path d="M 0,2 A 2,2 0 0,0 2,0" strokeWidth="0.2" />
+          <path d="M 100,2 A 2,2 0 0,1 98,0" strokeWidth="0.2" />
+          <path d="M 0,98 A 2,2 0 0,1 2,100" strokeWidth="0.2" />
+          <path d="M 100,98 A 2,2 0 0,0 98,100" strokeWidth="0.2" />
         </g>
 
         {/* Items — filter unknown types */}

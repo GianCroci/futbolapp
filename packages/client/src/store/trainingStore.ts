@@ -18,7 +18,7 @@ interface TrainingState {
   fetchSessions: () => Promise<void>;
   fetchSession: (id: string) => Promise<void>;
   createSession: (data: CreateTrainingSessionPayload) => Promise<TrainingSession | undefined>;
-  updateSession: (id: string, data: UpdateTrainingSessionPayload) => Promise<void>;
+  updateSession: (id: string, data: UpdateTrainingSessionPayload) => Promise<boolean>;
   deleteSession: (id: string) => Promise<void>;
 
   addStage: (sessionId: string, data: CreateTrainingStagePayload) => Promise<void>;
@@ -73,8 +73,10 @@ export const useTrainingStore = create<TrainingState>((set) => ({
         currentSession: state.currentSession?.id === id ? response.data : state.currentSession,
         isLoading: false,
       }));
+      return true;
     } catch {
       set({ error: 'Error al actualizar la sesión de entrenamiento', isLoading: false });
+      return false;
     }
   },
 

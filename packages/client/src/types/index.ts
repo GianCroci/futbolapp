@@ -167,7 +167,7 @@ export interface TrainingSession {
   name: string;
   date: string;
   generalNotes: string | null;
-  diagram?: FieldDiagram | null;
+  diagram?: SessionDiagrams | null;
   stages?: TrainingStage[];
   _count?: { stages: number };
   createdAt: string;
@@ -194,7 +194,7 @@ export interface UpdateTrainingSessionPayload {
   name?: string;
   date?: string;
   generalNotes?: string | null;
-  diagram?: FieldDiagram | null;
+  diagram?: SessionDiagrams | null;
 }
 
 // Exercise Templates
@@ -214,6 +214,16 @@ export interface FieldItem {
 export interface FieldDiagram {
   items: FieldItem[];
 }
+
+/** A single named field diagram inside a training session's diagram column. */
+export interface NamedDiagram {
+  id: string;
+  name: string;
+  items: FieldItem[];
+}
+
+/** New-shape storage format for the session `diagram` JSON column. */
+export type SessionDiagrams = { diagrams: NamedDiagram[] };
 
 export interface ExerciseTemplate {
   id: string;
