@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronLeft, ChevronUp, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronUp, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { useTrainingStore } from '../store/trainingStore';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
@@ -41,9 +41,11 @@ export function TrainingSessionDetail() {
   const [diagrams, setDiagrams] = useState<NamedDiagram[]>([]);
   const [activeDiagramId, setActiveDiagramId] = useState<string | null>(null);
   const [dirtyMap, setDirtyMap] = useState<Record<string, boolean>>({});
+  const [structureDirty, setStructureDirty] = useState(false);
   const [deletingDiagramId, setDeletingDiagramId] = useState<string | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [isSavingDiagram, setIsSavingDiagram] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const initializedRef = useRef(false);
 
   useEffect(() => {
@@ -58,14 +60,22 @@ export function TrainingSessionDetail() {
       setSessionName(currentSession.name);
       setSessionDate(currentSession.date?.split('T')[0] ?? '');
       setGeneralNotes(currentSession.generalNotes ?? '');
-      // Zero-diagram sessions auto-create one blank diagram (no save).
-      const normalized = normalizeDiagrams(currentSession.diagram);
+      // A session that never persisted a diagram list (new/legacy rows) gets
+      // one blank starter diagram; an explicitly persisted empty list
+      // ({ diagrams: [] }) stays empty, so deleting the last diagram persists.
+      const raw = currentSession.diagram;
+      const normalized = normalizeDiagrams(raw);
+      const hasExplicitDiagramList =
+        typeof raw === 'object' &&
+        raw !== null &&
+        !Array.isArray(raw) &&
+        Array.isArray((raw as Record<string, unknown>).diagrams);
       const initial =
-        normalized.length > 0
+        hasExplicitDiagramList || normalized.length > 0
           ? normalized
           : [{ id: crypto.randomUUID(), name: 'Diagrama 1', items: [] }];
       setDiagrams(initial);
-      setActiveDiagramId(initial[0].id);
+      setActiveDiagramId(initial.length > 0 ? initial[0].id : null);
       initializedRef.current = true;
     }
   }, [currentSession]);
@@ -99,14 +109,15 @@ export function TrainingSessionDetail() {
   const handleSaveDiagram = async () => {
     if (!id) return;
     setIsSavingDiagram(true);
-    try {
-      await updateSession(id, { diagram: { diagrams } });
+    setSaveError(null);
+    const ok = await updateSession(id, { diagram: { diagrams } });
+    if (ok) {
       setDirtyMap(resetDirty());
-    } catch {
-      // Error handling is done by the store
-    } finally {
-      setIsSavingDiagram(false);
+      setStructureDirty(false);
+    } else {
+      setSaveError('No se pudo guardar el diagrama. Verificá tu conexión e intentá de nuevo.');
     }
+    setIsSavingDiagram(false);
   };
 
   const handleAddDiagram = useCallback(() => {
@@ -170,6 +181,7 @@ export function TrainingSessionDetail() {
     const next = diagrams.filter((d) => d.id !== deletingDiagramId);
     setDiagrams(next);
     setDirtyMap(pruneDirty(dirtyMap, next.map((d) => d.id)));
+    setStructureDirty(true);
     if (activeDiagramId === deletingDiagramId) {
       setActiveDiagramId(next.length > 0 ? next[0].id : null);
     }
@@ -302,7 +314,7 @@ export function TrainingSessionDetail() {
           <div className="flex items-center justify-between gap-2 mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Diagramas del ejercicio</h3>
             <div className="flex items-center gap-2">
-              {anyDirty(dirtyMap) && (
+              {(anyDirty(dirtyMap) || structureDirty) && (
                 <span className="text-xs text-amber-600 font-medium">
                   Cambios sin guardar
                 </span>
@@ -325,13 +337,30 @@ export function TrainingSessionDetail() {
               <button
                 type="button"
                 onClick={handleSaveDiagram}
-                disabled={!anyDirty(dirtyMap) || isSavingDiagram}
+                disabled={(!anyDirty(dirtyMap) && !structureDirty) || isSavingDiagram}
                 className="px-3 py-1.5 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSavingDiagram ? 'Guardando...' : 'Guardar diagrama'}
               </button>
             </div>
           </div>
+
+          {saveError && (
+            <div
+              role="alert"
+              className="mb-4 flex items-start justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
+              <span>{saveError}</span>
+              <button
+                type="button"
+                onClick={() => setSaveError(null)}
+                aria-label="Descartar error de guardado"
+                className="text-red-500 hover:text-red-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Diagram selector */}
           {diagrams.length > 0 ? (
