@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
-import { useAuth0 } from '@auth0/auth0-react';
-import { Goal, Home, Telescope } from 'lucide-react';
+import { Home, Telescope } from 'lucide-react';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { LoginPage } from './pages/Login';
 import { CallbackPage } from './pages/Callback';
@@ -14,38 +13,8 @@ import { TrainingSessionsPage } from './pages/TrainingSessionsPage';
 import { TrainingSessionDetail } from './pages/TrainingSessionDetail';
 
 function App() {
-  const { isLoading, error } = useAuth0();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <Goal className="w-16 h-16 text-green-600 animate-pulse mx-auto mb-4" />
-          <p className="text-gray-500">Cargando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center max-w-md">
-          <h2 className="text-xl font-bold text-red-600 mb-2">Error de conexión</h2>
-          <p className="text-gray-600 mb-4">
-            No se pudo conectar con el servicio de autenticación. Verificá tu conexión e intentá de nuevo.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Reintentar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+  // The Auth0 isLoading/error gate moved into ProtectedRoute so public routes
+  // (the future `/` landing) paint instantly instead of waiting on Auth0.
   return (
     <BrowserRouter>
       <Routes>
