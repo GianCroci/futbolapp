@@ -7,6 +7,7 @@ export function useAuth() {
   const {
     isAuthenticated,
     isLoading: auth0Loading,
+    error: auth0Error,
     loginWithRedirect,
     logout: auth0Logout,
     getIdTokenClaims,
@@ -70,7 +71,7 @@ export function useAuth() {
   return {
     user: useAuthStore((s) => s.user),
     isLoading: auth0Loading || useAuthStore((s) => s.isLoading),
-    error: useAuthStore((s) => s.error),
+    error: auth0Error ?? useAuthStore((s) => s.error),
     isAuthenticated: !!useAuthStore((s) => s.user),
     login,
     logout,
