@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Home, Telescope } from 'lucide-react';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { LoginPage } from './pages/Login';
@@ -11,15 +12,28 @@ import FormationBuilderPage from './pages/FormationBuilder';
 import { StatsPage } from './pages/StatsPage';
 import { TrainingSessionsPage } from './pages/TrainingSessionsPage';
 import { TrainingSessionDetail } from './pages/TrainingSessionDetail';
+import { LandingFallback } from './components/landing/LandingFallback';
+
+// Code-split: the landing (and its `motion` dependency) loads only when a
+// logged-out user hits `/`, keeping `motion` out of the main bundle (SC-LAND-1).
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 
 function App() {
   // The Auth0 isLoading/error gate moved into ProtectedRoute so public routes
-  // (the future `/` landing) paint instantly instead of waiting on Auth0.
+  // (the `/` landing) paint instantly instead of waiting on Auth0.
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/callback" element={<CallbackPage />} />
+        <Route
+          path="/"
+          element={
+            <Suspense fallback={<LandingFallback />}>
+              <LandingPage />
+            </Suspense>
+          }
+        />
         <Route
           path="/dashboard"
           element={
@@ -92,7 +106,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route
           path="*"
           element={
