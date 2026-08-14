@@ -41,11 +41,10 @@ function mockAuth0State(overrides: Record<string, unknown> = {}) {
 
 /**
  * Deep link into a protected route (/teams/123) inside a router that also
- * declares the current unauthenticated redirect target (/login) and the
- * future landing route (/).
+ * declares the unauthenticated redirect target (/) and the /login fallback.
  */
-function renderProtected() {
-  return render(
+function renderTree() {
+  return (
     <MemoryRouter initialEntries={['/teams/123']}>
       <Routes>
         <Route
@@ -59,8 +58,12 @@ function renderProtected() {
         <Route path="/login" element={<div>login fallback page</div>} />
         <Route path="/" element={<div>landing root</div>} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+}
+
+function renderProtected() {
+  return render(renderTree());
 }
 
 describe('ProtectedRoute (SC-LAND-11: auth gating refactor)', () => {
@@ -81,7 +84,9 @@ describe('ProtectedRoute (SC-LAND-11: auth gating refactor)', () => {
   it('redirects unauthenticated users away from the deep link', () => {
     renderProtected();
 
-    expect(screen.getByText('login fallback page')).toBeInTheDocument();
+    // Redirect target flipped /login -> / in PR4 (SC-LAND-11): the deep link
+    // lands on `/`, which now renders the landing.
+    expect(screen.getByText('landing root')).toBeInTheDocument();
     expect(screen.queryByText('protected content')).not.toBeInTheDocument();
   });
 
@@ -121,10 +126,22 @@ describe('ProtectedRoute (SC-LAND-11: auth gating refactor)', () => {
     expect(screen.queryByText('login fallback page')).not.toBeInTheDocument();
   });
 
-  // PR4 (task 4.3): once the `/` landing route exists (task 4.2), the
-  // unauthenticated redirect target flips /login -> / (SC-LAND-11 final form).
-  // Applied earlier it would loop / -> /dashboard -> /. Asserted then, pending now.
-  it.todo(
-    'SC-LAND-11: unauthenticated deep link navigates to / (landing) instead of /login',
-  );
+  it('SC-LAND-11: waits for Auth0, then unauthenticated deep links land on / (landing), not /login', () => {
+    // While Auth0 is resolving, ProtectedRoute holds the gate: no redirect yet.
+    mockAuth0State({ isLoading: true });
+    const { unmount } = renderProtected();
+
+    expect(screen.queryByText('landing root')).not.toBeInTheDocument();
+    expect(screen.queryByText('login fallback page')).not.toBeInTheDocument();
+    expect(screen.queryByText('protected content')).not.toBeInTheDocument();
+
+    // Auth0 resolves unauthenticated -> redirect to `/` (landing), not /login.
+    unmount();
+    mockAuth0State({ isLoading: false });
+    renderProtected();
+
+    expect(screen.getByText('landing root')).toBeInTheDocument();
+    expect(screen.queryByText('login fallback page')).not.toBeInTheDocument();
+    expect(screen.queryByText('protected content')).not.toBeInTheDocument();
+  });
 });

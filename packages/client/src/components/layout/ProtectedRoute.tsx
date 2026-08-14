@@ -25,7 +25,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    // Logged-out visitors land on `/` (the public landing), never /login.
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
