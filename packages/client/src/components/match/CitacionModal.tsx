@@ -21,9 +21,7 @@ const DEFAULT_TEMPLATE = `⚽ *Jugadores convocados*
 📅 Fecha: {fecha}
 
 📋 *Plantel:*
-{plantel}
-
-¡A prepararse que viene el partido! 💪`;
+{plantel}`;
 
 const AVAILABLE_VARS = [
   { key: '{rival}', desc: 'Rival' },
@@ -40,7 +38,7 @@ function formatDate(dateStr: string | null): string {
 
 function buildPlantel(players: Player[]): string {
   return players
-    .map((p) => `#${p.dorsal ?? '?'} ${p.name} (${p.slotPosition})`)
+    .map((p) => `#${p.dorsal ?? '?'} ${p.name}`)
     .join('\n');
 }
 
