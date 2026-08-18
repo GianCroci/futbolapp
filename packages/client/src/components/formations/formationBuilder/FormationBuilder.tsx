@@ -7,7 +7,7 @@ import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { FormationToolbar } from './FormationToolbar';
 import { FootballPitch } from './FootballPitch';
 import { Roster } from './Roster';
-import { SubstitutesPanel, SubstituteEntry } from './SubstitutesPanel';
+import { SubstituteSlots, SubstituteEntry } from './SubstituteSlots';
 import { useFormationStore, SlotAssignment } from '../../../store/formationStore';
 import { usePlayerStore } from '../../../store/playerStore';
 import { Player } from '../../../types';
@@ -39,7 +39,6 @@ export function FormationBuilderPage() {
 
   // Substitute state (separate from pitch slots)
   const [substitutes, setSubstitutes] = useState<SubstituteEntry[]>([]);
-  const [subSearchQuery, setSubSearchQuery] = useState('');
 
   const isEditing = !!formationId;
 
@@ -222,6 +221,31 @@ export function FormationBuilderPage() {
     setSelectedSlot((prev) => (prev === slotPosition ? null : slotPosition));
   }, []);
 
+  // Add a substitute
+  const handleAddSubstitute = useCallback((player: Player) => {
+    setSubstitutes((prev) => [
+      ...prev,
+      {
+        playerId: player.id,
+        playerName: player.name,
+        playerDorsal: player.dorsal,
+        subInMinute: 0,
+      },
+    ]);
+  }, []);
+
+  // Remove a substitute
+  const handleRemoveSubstitute = useCallback((playerId: string) => {
+    setSubstitutes((prev) => prev.filter((s) => s.playerId !== playerId));
+  }, []);
+
+  // Update substitute minute
+  const handleUpdateSubMinute = useCallback((playerId: string, minute: number) => {
+    setSubstitutes((prev) =>
+      prev.map((s) => (s.playerId === playerId ? { ...s, subInMinute: minute } : s))
+    );
+  }, []);
+
   const handleRosterPlayerClick = useCallback(
     (player: Player) => {
       // If a slot is selected, assign the player to it
@@ -241,9 +265,16 @@ export function FormationBuilderPage() {
           );
         });
         setSelectedSlot(null);
+        return;
+      }
+
+      // If 11 starters are placed and fewer than 12 subs, add as substitute
+      const currentStarterCount = slots.filter((s) => s.playerId).length;
+      if (currentStarterCount === 11 && substitutes.length < 12) {
+        handleAddSubstitute(player);
       }
     },
-    [selectedSlot]
+    [selectedSlot, slots, substitutes.length, handleAddSubstitute]
   );
 
   const handleRemoveFromSlot = useCallback((slotPosition: string) => {
@@ -363,31 +394,6 @@ export function FormationBuilderPage() {
   const starterCount = slots.filter((s) => s.playerId).length;
   const subCount = substitutes.length;
   const playerCount = assignedPlayerIds.size;
-
-  // Add a substitute
-  const handleAddSubstitute = useCallback((player: Player) => {
-    setSubstitutes((prev) => [
-      ...prev,
-      {
-        playerId: player.id,
-        playerName: player.name,
-        playerDorsal: player.dorsal,
-        subInMinute: 0,
-      },
-    ]);
-  }, []);
-
-  // Remove a substitute
-  const handleRemoveSubstitute = useCallback((playerId: string) => {
-    setSubstitutes((prev) => prev.filter((s) => s.playerId !== playerId));
-  }, []);
-
-  // Update substitute minute
-  const handleUpdateSubMinute = useCallback((playerId: string, minute: number) => {
-    setSubstitutes((prev) =>
-      prev.map((s) => (s.playerId === playerId ? { ...s, subInMinute: minute } : s))
-    );
-  }, []);
 
   // Handle right-click / double-click to remove from slot
   const handleSlotContext = useCallback(
@@ -529,16 +535,16 @@ export function FormationBuilderPage() {
 
       {/* Builder area */}
       <div className="flex flex-col md:flex-row gap-4 p-4 flex-1">
-        {/* Pitch */}
-        <DndContext
-          sensors={sensors}
-          onDragStart={(event) => {
-            const playerData = event.active.data.current?.player as Player | undefined;
-            if (playerData) setActiveDragPlayer(playerData);
-          }}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex-1">
+        {/* Left column: pitch + substitute slots */}
+        <div className="flex-1 flex flex-col">
+          <DndContext
+            sensors={sensors}
+            onDragStart={(event) => {
+              const playerData = event.active.data.current?.player as Player | undefined;
+              if (playerData) setActiveDragPlayer(playerData);
+            }}
+            onDragEnd={handleDragEnd}
+          >
             <FootballPitch
               slots={slots}
               selectedSlot={selectedSlot}
@@ -552,15 +558,23 @@ export function FormationBuilderPage() {
                 ) : null}
               </DragOverlay>
             </FootballPitch>
-          </div>
-        </DndContext>
+          </DndContext>
+
+          {/* Substitute slots below pitch */}
+          <SubstituteSlots
+            substitutes={substitutes}
+            allPlayers={players}
+            onRemove={handleRemoveSubstitute}
+            onUpdateMinute={handleUpdateSubMinute}
+          />
+        </div>
 
         {/* Roster sidebar */}
         <div className="w-full md:w-72 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col max-h-[50vh] md:max-h-[600px]">
           <div className="p-3 border-b border-gray-200 bg-gray-50 rounded-t-xl">
             <h3 className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
               <Users className="w-4 h-4 text-green-600" />
-              Titulares
+              {starterCount === 11 ? 'Plantel' : 'Titulares'}
             </h3>
             <p className="text-xs text-gray-400 mt-0.5">
               {starterCount}/11 en cancha · {players.length - playerCount} disponibles
@@ -606,18 +620,6 @@ export function FormationBuilderPage() {
           />
         </div>
       </div>
-
-      {/* Substitutes panel */}
-      <SubstitutesPanel
-        substitutes={substitutes}
-        assignedPlayerIds={assignedPlayerIds}
-        allPlayers={players}
-        searchQuery={subSearchQuery}
-        onSearchChange={setSubSearchQuery}
-        onAddSubstitute={handleAddSubstitute}
-        onRemoveSubstitute={handleRemoveSubstitute}
-        onUpdateMinute={handleUpdateSubMinute}
-      />
     </AppLayout>
   );
 }
