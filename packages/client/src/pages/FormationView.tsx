@@ -314,7 +314,7 @@ export function FormationViewPage() {
       <div className="flex flex-col md:flex-row gap-6 mt-4">
         {/* Pitch view */}
         <div className="flex justify-center md:flex-none md:w-[45%]">
-          <div ref={pitchRef} className="relative w-full max-w-lg aspect-[3/4] rounded-xl overflow-hidden shadow-inner">
+          <div ref={pitchRef} className="relative w-full max-w-lg aspect-[3/4] md:aspect-[4/3] rounded-xl overflow-hidden shadow-inner">
             <div className="absolute inset-0 bg-gradient-to-b from-green-600 via-green-500 to-green-700">
               <div className="absolute inset-[8%] border-2 border-white/30 rounded-lg" />
               <div className="absolute top-[50%] left-[8%] right-[8%] border-t-2 border-white/30" />
