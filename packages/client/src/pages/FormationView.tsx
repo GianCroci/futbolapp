@@ -310,47 +310,49 @@ export function FormationViewPage() {
         </div>
       </div>
 
-      {/* Pitch view */}
-      <div className="flex justify-center">
-        <div ref={pitchRef} className="relative w-full max-w-2xl aspect-[3/4] rounded-xl overflow-hidden shadow-inner">
-          <div className="absolute inset-0 bg-gradient-to-b from-green-600 via-green-500 to-green-700">
-            <div className="absolute inset-[8%] border-2 border-white/30 rounded-lg" />
-            <div className="absolute top-[50%] left-[8%] right-[8%] border-t-2 border-white/30" />
-            <div className="absolute top-[8%] bottom-[8%] left-[50%] border-l-2 border-white/30" />
-            <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-2 border-white/30 rounded-full" />
-            <div className="absolute top-0 left-[25%] right-[25%] h-[8%] border-2 border-white/30 border-t-0 rounded-b-sm" />
-            <div className="absolute bottom-0 left-[25%] right-[25%] h-[8%] border-2 border-white/30 border-b-0 rounded-t-sm" />
-            <div className="absolute top-0 left-[38%] right-[38%] h-[4%] border-2 border-white/30 border-t-0" />
-            <div className="absolute bottom-0 left-[38%] right-[38%] h-[4%] border-2 border-white/30 border-b-0" />
-          </div>
+      {/* Pitch + Players split layout */}
+      <div className="flex flex-col md:flex-row gap-6 mt-4">
+        {/* Pitch view */}
+        <div className="flex justify-center md:flex-none md:w-[45%]">
+          <div ref={pitchRef} className="relative w-full max-w-lg aspect-[3/4] rounded-xl overflow-hidden shadow-inner">
+            <div className="absolute inset-0 bg-gradient-to-b from-green-600 via-green-500 to-green-700">
+              <div className="absolute inset-[8%] border-2 border-white/30 rounded-lg" />
+              <div className="absolute top-[50%] left-[8%] right-[8%] border-t-2 border-white/30" />
+              <div className="absolute top-[8%] bottom-[8%] left-[50%] border-l-2 border-white/30" />
+              <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-20 h-20 border-2 border-white/30 rounded-full" />
+              <div className="absolute top-0 left-[25%] right-[25%] h-[8%] border-2 border-white/30 border-t-0 rounded-b-sm" />
+              <div className="absolute bottom-0 left-[25%] right-[25%] h-[8%] border-2 border-white/30 border-b-0 rounded-t-sm" />
+              <div className="absolute top-0 left-[38%] right-[38%] h-[4%] border-2 border-white/30 border-t-0" />
+              <div className="absolute bottom-0 left-[38%] right-[38%] h-[4%] border-2 border-white/30 border-b-0" />
+            </div>
 
-          {slots.map((slot) => (
-            <div
-              key={slot.slotPosition}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${slot.positionX}%`, top: `${slot.positionY}%` }}
-            >
-              <div className="w-20 h-20 rounded-full flex flex-col items-center justify-center border-2 border-white bg-green-700/90 text-white shadow-md">
-                {slot.playerDorsal && (
-                  <span className="text-xs leading-none font-mono opacity-80">
-                    {slot.playerDorsal}
-                  </span>
-                )}
-                <div className="text-sm font-bold leading-tight text-center px-1">
-                  {(slot.playerName || '').split(' ').map((part, i) => (
-                    <span key={i} className="block">{part}</span>
-                  ))}
+            {slots.map((slot) => (
+              <div
+                key={slot.slotPosition}
+                className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                style={{ left: `${slot.positionX}%`, top: `${slot.positionY}%` }}
+              >
+                <div className="w-14 h-14 rounded-full flex flex-col items-center justify-center border-2 border-white bg-green-700/90 text-white shadow-md">
+                  {slot.playerDorsal && (
+                    <span className="text-[10px] leading-none font-mono opacity-80">
+                      {slot.playerDorsal}
+                    </span>
+                  )}
+                  <div className="text-xs font-bold leading-tight text-center px-0.5">
+                    {(slot.playerName || '').split(' ').map((part, i) => (
+                      <span key={i} className="block">{part}</span>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Players list */}
-      <div className="mt-8 max-w-2xl mx-auto">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Jugadores</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {/* Players list */}
+        <div className="md:flex-1 md:min-w-0">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Jugadores</h3>
+          <div className="grid grid-cols-1 gap-2">
           {currentFormation.players
             .filter((fp) => {
               if (!fp.player) return false;
@@ -407,6 +409,7 @@ export function FormationViewPage() {
               );
             })}
         </div>
+      </div>
       </div>
 
       {/* Match Events */}
